@@ -9,7 +9,9 @@ import { CoreModule } from './core/core.module';
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://localhost/nest-bloggers-platform'), //TODO: move to env. will be in the following lessons
+    MongooseModule.forRoot(
+      process.env.MONGO_URI ?? 'mongodb://localhost/nest-bloggers-platform',
+    ), //локально дефолт, на проде — MONGO_URI из окружения (напр. MongoDB Atlas)
     UserAccountsModule, //все модули должны быть заимпортированы в корневой модуль, либо напрямую, либо по цепочке (через другие модули)
     TestingModule,
     BloggersPlatformModule,
