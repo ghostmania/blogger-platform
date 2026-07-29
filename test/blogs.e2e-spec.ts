@@ -4,7 +4,9 @@ import request from 'supertest';
 import { pipesSetup } from '../src/setup/pipes.setup';
 
 // Изолированная тестовая БД — тесты (и DELETE /testing/all-data) не трогают dev-данные.
-const TEST_MONGO_URI = 'mongodb://localhost:27017/nest-bloggers-platform-test';
+//отдельная БД на спеку — чтобы параллельные spec-файлы не затирали данные друг друга через deleteAll
+const TEST_MONGO_URI =
+  'mongodb://localhost:27017/nest-bloggers-platform-test-blogs';
 
 // Валидный по формату, но заведомо несуществующий ObjectId — чтобы получить 404, а не CastError 500.
 const NON_EXISTENT_ID = '507f1f77bcf86cd799439011';
@@ -197,13 +199,5 @@ describe('Blogs API (e2e) — without auth and validation', () => {
     });
   });
 
-  //блог-специфичные посты ещё не реализованы (posts controller — заглушка).
-  //включить, когда будет готов posts-модуль. CreatePostForBlogInputDto уже создан.
-  describe.skip('blog-scoped posts (pending posts implementation)', () => {
-    it.todo('POST -> /blogs/:blogId/posts should create post; status 201');
-    it.todo('GET -> /blogs/:blogId/posts should return 200 with pagination');
-    it.todo(
-      'POST, GET -> /blogs/:blogId/posts should return 404 if blog not found',
-    );
-  });
+  //блог-специфичные посты (/blogs/:blogId/posts) покрыты в posts.e2e-spec.ts
 });
