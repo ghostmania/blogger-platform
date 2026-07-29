@@ -2,10 +2,11 @@ import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { pipesSetup } from '../src/setup/pipes.setup';
-import { globalPrefixSetup } from '../src/setup/global-prefix.setup';
 
 // Изолированная тестовая БД — тесты (и DELETE /testing/all-data) не трогают dev-данные.
-const TEST_MONGO_URI = 'mongodb://localhost:27017/nest-bloggers-platform-test';
+//отдельная БД на спеку — чтобы параллельные spec-файлы не затирали данные друг друга через deleteAll
+const TEST_MONGO_URI =
+  'mongodb://localhost:27017/nest-bloggers-platform-test-blogs';
 
 // Валидный по формату, но заведомо несуществующий ObjectId — чтобы получить 404, а не CastError 500.
 const NON_EXISTENT_ID = '507f1f77bcf86cd799439011';
@@ -31,16 +32,13 @@ describe('Blogs API (e2e) — without auth and validation', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    pipesSetup(app); //глобальный ValidationPipe с transform
-    globalPrefixSetup(app); //префикс 'api' -> роуты /api/...
+    pipesSetup(app); //глобальный ValidationPipe с transform (роуты в корне, без префикса)
     await app.init();
   });
 
   beforeEach(async () => {
     //чистим БД перед каждым тестом
-    await request(app.getHttpServer())
-      .delete('/api/testing/all-data')
-      .expect(204);
+    await request(app.getHttpServer()).delete('/testing/all-data').expect(204);
   });
 
   afterAll(async () => {
@@ -50,7 +48,7 @@ describe('Blogs API (e2e) — without auth and validation', () => {
   //хелпер: создаёт блог и возвращает его view
   const createBlog = async (input = validBlogInput) => {
     const res = await request(app.getHttpServer())
-      .post('/api/blogs')
+      .post('/blogs')
       .send(input)
       .expect(201);
 
@@ -62,12 +60,10 @@ describe('Blogs API (e2e) — without auth and validation', () => {
       await createBlog();
 
       await request(app.getHttpServer())
-        .delete('/api/testing/all-data')
+        .delete('/testing/all-data')
         .expect(204);
 
-      const res = await request(app.getHttpServer())
-        .get('/api/blogs')
-        .expect(200);
+      const res = await request(app.getHttpServer()).get('/blogs').expect(200);
 
       expect(res.body.items).toHaveLength(0);
       expect(res.body.totalCount).toBe(0);
@@ -77,7 +73,7 @@ describe('Blogs API (e2e) — without auth and validation', () => {
   describe('POST -> /blogs', () => {
     it('should create new blog; status 201; content: created blog', async () => {
       const res = await request(app.getHttpServer())
-        .post('/api/blogs')
+        .post('/blogs')
         .send(validBlogInput)
         .expect(201);
 
@@ -92,7 +88,7 @@ describe('Blogs API (e2e) — without auth and validation', () => {
 
       //дополнительный метод: GET -> /blogs/:id должен вернуть созданный блог
       const getRes = await request(app.getHttpServer())
-        .get(`/api/blogs/${res.body.id}`)
+        .get(`/blogs/${res.body.id}`)
         .expect(200);
 
       expect(getRes.body).toEqual(res.body);
@@ -104,9 +100,7 @@ describe('Blogs API (e2e) — without auth and validation', () => {
       await createBlog({ ...validBlogInput, name: 'blog 1' });
       await createBlog({ ...validBlogInput, name: 'blog 2' });
 
-      const res = await request(app.getHttpServer())
-        .get('/api/blogs')
-        .expect(200);
+      const res = await request(app.getHttpServer()).get('/blogs').expect(200);
 
       expect(res.body).toEqual({
         pagesCount: 1,
@@ -123,7 +117,7 @@ describe('Blogs API (e2e) — without auth and validation', () => {
       await createBlog({ ...validBlogInput, name: 'banana blog' });
 
       const res = await request(app.getHttpServer())
-        .get('/api/blogs')
+        .get('/blogs')
         .query({ searchNameTerm: 'apple' })
         .expect(200);
 
@@ -137,7 +131,7 @@ describe('Blogs API (e2e) — without auth and validation', () => {
       const created = await createBlog();
 
       const res = await request(app.getHttpServer())
-        .get(`/api/blogs/${created.id}`)
+        .get(`/blogs/${created.id}`)
         .expect(200);
 
       expect(res.body).toEqual(created);
@@ -145,7 +139,7 @@ describe('Blogs API (e2e) — without auth and validation', () => {
 
     it('should return 404 if :id not found', async () => {
       await request(app.getHttpServer())
-        .get(`/api/blogs/${NON_EXISTENT_ID}`)
+        .get(`/blogs/${NON_EXISTENT_ID}`)
         .expect(404);
     });
   });
@@ -161,13 +155,13 @@ describe('Blogs API (e2e) — without auth and validation', () => {
       };
 
       await request(app.getHttpServer())
-        .put(`/api/blogs/${created.id}`)
+        .put(`/blogs/${created.id}`)
         .send(updateInput)
         .expect(204);
 
       //дополнительный метод: GET -> /blogs/:id отражает изменения
       const res = await request(app.getHttpServer())
-        .get(`/api/blogs/${created.id}`)
+        .get(`/blogs/${created.id}`)
         .expect(200);
 
       expect(res.body).toEqual({
@@ -178,7 +172,7 @@ describe('Blogs API (e2e) — without auth and validation', () => {
 
     it('should return 404 if :id not found', async () => {
       await request(app.getHttpServer())
-        .put(`/api/blogs/${NON_EXISTENT_ID}`)
+        .put(`/blogs/${NON_EXISTENT_ID}`)
         .send(validBlogInput)
         .expect(404);
     });
@@ -189,29 +183,21 @@ describe('Blogs API (e2e) — without auth and validation', () => {
       const created = await createBlog();
 
       await request(app.getHttpServer())
-        .delete(`/api/blogs/${created.id}`)
+        .delete(`/blogs/${created.id}`)
         .expect(204);
 
       //удалённый блог больше не доступен
       await request(app.getHttpServer())
-        .get(`/api/blogs/${created.id}`)
+        .get(`/blogs/${created.id}`)
         .expect(404);
     });
 
     it('should return 404 if :id not found', async () => {
       await request(app.getHttpServer())
-        .delete(`/api/blogs/${NON_EXISTENT_ID}`)
+        .delete(`/blogs/${NON_EXISTENT_ID}`)
         .expect(404);
     });
   });
 
-  //блог-специфичные посты ещё не реализованы (posts controller — заглушка).
-  //включить, когда будет готов posts-модуль. CreatePostForBlogInputDto уже создан.
-  describe.skip('blog-scoped posts (pending posts implementation)', () => {
-    it.todo('POST -> /blogs/:blogId/posts should create post; status 201');
-    it.todo('GET -> /blogs/:blogId/posts should return 200 with pagination');
-    it.todo(
-      'POST, GET -> /blogs/:blogId/posts should return 404 if blog not found',
-    );
-  });
+  //блог-специфичные посты (/blogs/:blogId/posts) покрыты в posts.e2e-spec.ts
 });

@@ -18,12 +18,19 @@ import { CreateBlogInputDto } from './input-dto/create-blog.input-dto';
 import { BlogsService } from '../../blogs.service';
 import { UpdateBlogInputDto } from './input-dto/update-blog.input-dto';
 import { ApiParam } from '@nestjs/swagger';
+import { PostsService } from '../../posts.service';
+import { PostsQueryRepository } from '../../infrastructure/query/posts/posts.query-repository';
+import { GetPostsQueryParams } from '../posts/input-dto/get-posts-query-params.input-dto';
+import { CreatePostForBlogInputDto } from '../posts/input-dto/create-post-for-blog.input-dto';
+import { PostViewDto } from '../posts/view-dto/posts.view-dto';
 
 @Controller('blogs')
 export class BlogsController {
   constructor(
     private blogsQueryRepository: BlogsQueryRepository,
     private blogsService: BlogsService,
+    private postsService: PostsService,
+    private postsQueryRepository: PostsQueryRepository,
   ) {
     console.log('Blogs controller created');
   }
@@ -33,6 +40,27 @@ export class BlogsController {
     @Query() query: GetBlogsQueryParams,
   ): Promise<PaginatedViewDto<BlogViewDto[]>> {
     return this.blogsQueryRepository.getAll(query);
+  }
+
+  @Get(':blogId/posts')
+  async getBlogPosts(
+    @Param('blogId') blogId: string,
+    @Query() query: GetPostsQueryParams,
+  ): Promise<PaginatedViewDto<PostViewDto[]>> {
+    //404, если блога нет
+    await this.blogsQueryRepository.getByIdOrNotFoundFail(blogId);
+
+    return this.postsQueryRepository.getAll(query, blogId);
+  }
+
+  @Post(':blogId/posts')
+  async createBlogPost(
+    @Param('blogId') blogId: string,
+    @Body() body: CreatePostForBlogInputDto,
+  ): Promise<PostViewDto> {
+    const postId = await this.postsService.createPostForBlog(blogId, body);
+
+    return this.postsQueryRepository.getByIdOrNotFoundFail(postId);
   }
 
   @ApiParam({ name: 'id' }) //для сваггера
