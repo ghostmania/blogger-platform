@@ -99,13 +99,10 @@ export class UsersService {
     );
     await this.usersRepository.save(user);
 
-    //письмо шлём без await: клиенту не нужно ждать SMTP,
-    //при сбое доставки код можно перезапросить через registration-email-resending
-    this.emailService
-      .sendConfirmationEmail(user.email, confirmCode)
-      .catch((error: unknown) =>
-        this.logger.error('Failed to send confirmation email', error),
-      );
+    await this.trySendEmail(
+      () => this.emailService.sendConfirmationEmail(user.email, confirmCode),
+      'Failed to send confirmation email',
+    );
   }
 
   async confirmRegistration(code: string): Promise<void> {
@@ -159,11 +156,10 @@ export class UsersService {
     );
     await this.usersRepository.save(user);
 
-    this.emailService
-      .sendConfirmationEmail(user.email, confirmCode)
-      .catch((error: unknown) =>
-        this.logger.error('Failed to send confirmation email', error),
-      );
+    await this.trySendEmail(
+      () => this.emailService.sendConfirmationEmail(user.email, confirmCode),
+      'Failed to send confirmation email',
+    );
   }
 
   async recoverPassword(email: string): Promise<void> {
@@ -182,11 +178,11 @@ export class UsersService {
     );
     await this.usersRepository.save(user);
 
-    this.emailService
-      .sendPasswordRecoveryEmail(user.email, recoveryCode)
-      .catch((error: unknown) =>
-        this.logger.error('Failed to send password recovery email', error),
-      );
+    await this.trySendEmail(
+      () =>
+        this.emailService.sendPasswordRecoveryEmail(user.email, recoveryCode),
+      'Failed to send password recovery email',
+    );
   }
 
   async setNewPassword(newPassword: string, recoveryCode: string) {
@@ -221,6 +217,21 @@ export class UsersService {
     user.updatePassword(passwordHash);
 
     await this.usersRepository.save(user);
+  }
+
+  //отправку писем ОБЯЗАТЕЛЬНО ждём: на serverless (Vercel) контейнер замораживается
+  //сразу после ответа, и «фоновый» промис отправки не доживает до конца — письмо не уходит,
+  //а зависший SMTP-коннект оставляет инстанс нерабочим для следующих запросов.
+  //При этом сбой доставки не ломает сценарий: юзер создан, код сохранён, письмо можно перезапросить
+  private async trySendEmail(
+    send: () => Promise<void>,
+    errorMessage: string,
+  ): Promise<void> {
+    try {
+      await send();
+    } catch (error: unknown) {
+      this.logger.error(errorMessage, error);
+    }
   }
 
   //login и email должны быть уникальны; иначе 400
