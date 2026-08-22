@@ -11,10 +11,30 @@ import { AuthQueryRepository } from './infrastructure/query/auth.query-repositor
 import { SecurityDevicesController } from './api/security-devices.controller';
 import { UsersExternalQueryRepository } from './infrastructure/external-query/users.external-query-repository';
 import { UsersExternalService } from './application/users.external-service';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { AuthService } from './application/auth.service';
+import { LocalStrategy } from './guards/local/local.strategy';
+import { JwtModule } from '@nestjs/jwt';
+import { CryptoService } from './application/crypto.service';
+import { JwtStrategy } from './guards/bearer/jwt.strategy';
+import {
+  ACCESS_TOKEN_EXPIRES_IN,
+  ACCESS_TOKEN_SECRET,
+} from './constants/auth.constants';
 
 @Module({
   imports: [
+    //если в системе несколько токенов (например, access и refresh) с разными опциями (время жизни, секрет)
+    //можно переопределить опции при вызове метода jwt.service.sign
+    //или написать свой tokens сервис (адаптер), где эти опции будут уже учтены
+    //или использовать useFactory и регистрацию через токены для JwtService,
+    //для создания нескольких экземпляров в IoC с разными настройками (пример в следующих занятиях)
+    JwtModule.register({
+      secret: ACCESS_TOKEN_SECRET, //TODO: move to configService. will be in the following lessons
+      signOptions: { expiresIn: ACCESS_TOKEN_EXPIRES_IN }, // Время жизни токена
+    }),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    NotificationsModule,
   ],
   controllers: [UsersController, AuthController, SecurityDevicesController],
   providers: [
@@ -23,9 +43,13 @@ import { UsersExternalService } from './application/users.external-service';
     UsersQueryRepository,
     SecurityDevicesQueryRepository,
     AuthQueryRepository,
+    AuthService,
+    LocalStrategy,
+    CryptoService,
+    JwtStrategy,
     UsersExternalQueryRepository,
     UsersExternalService,
   ],
-  exports: [UsersExternalQueryRepository, UsersExternalService],
+  exports: [JwtStrategy, UsersExternalQueryRepository, UsersExternalService],
 })
 export class UserAccountsModule {}

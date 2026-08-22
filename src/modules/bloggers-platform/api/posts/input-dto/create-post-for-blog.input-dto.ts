@@ -1,5 +1,5 @@
 import { IsString, Length } from 'class-validator';
-import { Trim } from '../../decorators/trim';
+import { Trim } from '../../../../../core/decorators/transform/trim';
 
 //dto для боди при создании поста внутри блога (POST /blogs/:blogId/posts) — blogId берётся из параметра пути
 export class CreatePostForBlogInputDto {

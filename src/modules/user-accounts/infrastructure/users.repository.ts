@@ -1,6 +1,9 @@
 import { InjectModel } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 import { User, UserDocument, UserModelType } from '../domain/user.entity';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { DomainException } from '../../../core/exceptions/domain-exceptions';
+import { DomainExceptionCode } from '../../../core/exceptions/domain-exception-codes';
 
 @Injectable()
 export class UsersRepository {
@@ -18,14 +21,51 @@ export class UsersRepository {
     await user.save();
   }
 
-  async findOrNotFoundFail(id: string): Promise<UserDocument> {
-    const user = await this.findById(id);
+  async findOrNotFoundFail(id: Types.ObjectId): Promise<UserDocument> {
+    const user = await this.findById(id.toString());
 
     if (!user) {
-      //TODO: replace with domain exception
-      throw new NotFoundException('user not found');
+      throw new DomainException({
+        code: DomainExceptionCode.NotFound,
+        message: 'User not found',
+      });
     }
 
     return user;
+  }
+
+  findByLogin(login: string): Promise<UserDocument | null> {
+    return this.UserModel.findOne({
+      login,
+      deletedAt: null,
+    });
+  }
+
+  findByEmail(email: string): Promise<UserDocument | null> {
+    return this.UserModel.findOne({
+      email,
+      deletedAt: null,
+    });
+  }
+
+  findByLoginOrEmail(loginOrEmail: string): Promise<UserDocument | null> {
+    return this.UserModel.findOne({
+      $or: [{ login: loginOrEmail }, { email: loginOrEmail }],
+      deletedAt: null,
+    });
+  }
+
+  findByConfirmationCode(code: string): Promise<UserDocument | null> {
+    return this.UserModel.findOne({
+      'emailConfirmation.confirmationCode': code,
+      deletedAt: null,
+    });
+  }
+
+  findByPasswordRecoveryCode(code: string): Promise<UserDocument | null> {
+    return this.UserModel.findOne({
+      'passwordRecovery.recoveryCode': code,
+      deletedAt: null,
+    });
   }
 }

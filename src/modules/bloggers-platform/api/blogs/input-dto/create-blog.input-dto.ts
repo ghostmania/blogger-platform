@@ -1,5 +1,5 @@
 import { IsString, Length, Matches } from 'class-validator';
-import { Trim } from '../../decorators/trim';
+import { Trim } from '../../../../../core/decorators/transform/trim';
 
 //паттерн валидного websiteUrl (https://...)
 const WEBSITE_URL_PATTERN =

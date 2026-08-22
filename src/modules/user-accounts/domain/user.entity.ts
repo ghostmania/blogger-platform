@@ -3,6 +3,30 @@ import { HydratedDocument, Model } from 'mongoose';
 import { UpdateUserDto } from '../dto/create-user.dto';
 import { CreateUserDomainDto } from './dto/create-user.domain.dto';
 import { Name, NameSchema } from './name.schema';
+import {
+  EmailConfirmation,
+  EmailConfirmationSchema,
+} from './email-confirmation.schema';
+import {
+  PasswordRecovery,
+  PasswordRecoverySchema,
+} from './password-recovery.schema';
+
+//ограничения полей юзера по swagger-спеке — единый источник для схемы и DTO-валидации
+export const loginConstraints = {
+  minLength: 3,
+  maxLength: 10,
+  match: /^[a-zA-Z0-9_-]*$/,
+};
+
+export const passwordConstraints = {
+  minLength: 6,
+  maxLength: 20,
+};
+
+export const emailConstraints = {
+  match: /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/,
+};
 
 //флаг timestemp автоматичеки добавляет поля upatedAt и createdAt
 /**
@@ -16,7 +40,7 @@ export class User {
    * @type {string}
    * @required
    */
-  @Prop({ type: String, required: true })
+  @Prop({ type: String, required: true, ...loginConstraints })
   login: string;
 
   /**
@@ -32,16 +56,22 @@ export class User {
    * @type {string}
    * @required
    */
-  @Prop({ type: String, min: 5, required: true })
+  @Prop({ type: String, required: true, ...emailConstraints })
   email: string;
 
   /**
-   * Email confirmation status (if not confirmed in 2 days account will be deleted)
-   * @type {boolean}
-   * @default false
+   * Email confirmation info (code, expiration, status)
+   * @type {EmailConfirmation}
    */
-  @Prop({ type: Boolean, required: true, default: false })
-  isEmailConfirmed: boolean;
+  @Prop({ type: EmailConfirmationSchema, required: true })
+  emailConfirmation: EmailConfirmation;
+
+  /**
+   * Password recovery info (code, expiration)
+   * @type {PasswordRecovery}
+   */
+  @Prop({ type: PasswordRecoverySchema, required: true })
+  passwordRecovery: PasswordRecovery;
 
   // @Prop(NameSchema) this variant from docdoesn't make validation for inner object
   @Prop({ type: NameSchema })
@@ -84,7 +114,16 @@ export class User {
     user.email = dto.email;
     user.passwordHash = dto.passwordHash;
     user.login = dto.login;
-    user.isEmailConfirmed = false; // пользователь ВСЕГДА должен после регистрации подтверждить свой Email
+    // пользователь ВСЕГДА должен после регистрации подтверждить свой Email
+    user.emailConfirmation = {
+      confirmationCode: null,
+      expirationDate: null,
+      isConfirmed: false,
+    };
+    user.passwordRecovery = {
+      recoveryCode: null,
+      expirationDate: null,
+    };
 
     user.name = {
       firstName: 'firstName xxx',
@@ -115,13 +154,67 @@ export class User {
    */
   update(dto: UpdateUserDto) {
     if (dto.email !== this.email) {
-      this.isEmailConfirmed = false;
+      this.emailConfirmation.isConfirmed = false;
       this.email = dto.email;
     }
+  }
+
+  /**
+   * Sets a new email confirmation code with expiration date
+   * @throws {Error} If the email is already confirmed
+   */
+  setConfirmationCode(code: string, expirationDate: Date) {
+    if (this.emailConfirmation.isConfirmed) {
+      throw new Error('Email is already confirmed');
+    }
+    this.emailConfirmation.confirmationCode = code;
+    this.emailConfirmation.expirationDate = expirationDate;
+  }
+
+  /**
+   * Marks the email as confirmed
+   * @throws {Error} If the email is already confirmed
+   */
+  confirmEmail() {
+    if (this.emailConfirmation.isConfirmed) {
+      throw new Error('Email is already confirmed');
+    }
+    this.emailConfirmation.isConfirmed = true;
+    this.emailConfirmation.confirmationCode = null;
+    this.emailConfirmation.expirationDate = null;
+  }
+
+  /**
+   * Sets a password recovery code with expiration date
+   */
+  setPasswordRecoveryCode(code: string, expirationDate: Date) {
+    this.passwordRecovery.recoveryCode = code;
+    this.passwordRecovery.expirationDate = expirationDate;
+  }
+
+  /**
+   * Sets a new password hash and clears the recovery code
+   */
+  updatePassword(passwordHash: string) {
+    this.passwordHash = passwordHash;
+    this.passwordRecovery.recoveryCode = null;
+    this.passwordRecovery.expirationDate = null;
   }
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+//уникальность login/email гарантируется на уровне БД: проверка в сервисе не защищает
+//от параллельных запросов (check-then-act race). Индексы частичные — только по
+//неудалённым юзерам, чтобы soft-delete не блокировал повторную регистрацию.
+UserSchema.index(
+  { login: 1 },
+  { unique: true, partialFilterExpression: { deletedAt: { $type: 'null' } } },
+);
+UserSchema.index(
+  { email: 1 },
+  { unique: true, partialFilterExpression: { deletedAt: { $type: 'null' } } },
+);
 
 //регистрирует методы сущности в схеме
 UserSchema.loadClass(User);

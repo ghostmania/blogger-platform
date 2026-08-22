@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 import { User, UserModelType } from '../domain/user.entity';
 import { UsersRepository } from '../infrastructure/users.repository';
 
@@ -13,7 +14,9 @@ export class UsersExternalService {
   ) {}
 
   async makeUserAsSpammer(userId: string) {
-    const user = await this.usersRepository.findOrNotFoundFail(userId);
+    const user = await this.usersRepository.findOrNotFoundFail(
+      new Types.ObjectId(userId),
+    );
 
     // user.makeSpammer();
 
