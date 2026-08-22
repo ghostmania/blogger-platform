@@ -24,8 +24,10 @@ export const passwordConstraints = {
   maxLength: 20,
 };
 
+//паттерн из swagger-спеки: допускает плюс-адресацию (user+tag@domain.com),
+//которой автотесты адресуют реальный ящик, и TLD длиннее 4 символов
 export const emailConstraints = {
-  match: /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/,
+  match: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
 };
 
 //флаг timestemp автоматичеки добавляет поля upatedAt и createdAt

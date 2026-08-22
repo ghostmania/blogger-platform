@@ -5,7 +5,6 @@ import { initSettings } from './helpers/init-settings';
 import { deleteAllData } from './helpers/delete-all-data';
 import { EmailServiceMock } from './mock/email-service.mock';
 import { CreateUserDto } from '../src/modules/user-accounts/dto/create-user.dto';
-import { DomainExceptionCode } from '../src/core/exceptions/domain-exception-codes';
 
 const userInput: CreateUserDto = {
   login: 'user1',
@@ -68,16 +67,16 @@ describe('auth', () => {
         .post(`/auth/registration`)
         .send({ ...userInput, email: 'other@example.com' })
         .expect(HttpStatus.BAD_REQUEST);
-      expect(sameLoginBody.extensions).toEqual([
-        { message: expect.any(String), key: 'login' },
+      expect(sameLoginBody.errorsMessages).toEqual([
+        { message: expect.any(String), field: 'login' },
       ]);
 
       const { body: sameEmailBody } = await request(app.getHttpServer())
         .post(`/auth/registration`)
         .send({ ...userInput, login: 'other' })
         .expect(HttpStatus.BAD_REQUEST);
-      expect(sameEmailBody.extensions).toEqual([
-        { message: expect.any(String), key: 'email' },
+      expect(sameEmailBody.errorsMessages).toEqual([
+        { message: expect.any(String), field: 'email' },
       ]);
     });
 
@@ -87,12 +86,11 @@ describe('auth', () => {
         .send({ login: 'a b c', password: '12345', email: 'invalid' })
         .expect(HttpStatus.BAD_REQUEST);
 
-      expect(responseBody.code).toBe(DomainExceptionCode.ValidationError);
-      expect(responseBody.extensions).toEqual(
+      expect(responseBody.errorsMessages).toEqual(
         expect.arrayContaining([
-          { message: expect.any(String), key: 'login' },
-          { message: expect.any(String), key: 'password' },
-          { message: expect.any(String), key: 'email' },
+          { message: expect.any(String), field: 'login' },
+          { message: expect.any(String), field: 'password' },
+          { message: expect.any(String), field: 'email' },
         ]),
       );
     });
@@ -122,8 +120,8 @@ describe('auth', () => {
         .post(`/auth/registration-confirmation`)
         .send({ code })
         .expect(HttpStatus.BAD_REQUEST);
-      expect(reusedBody.extensions).toEqual([
-        { message: expect.any(String), key: 'code' },
+      expect(reusedBody.errorsMessages).toEqual([
+        { message: expect.any(String), field: 'code' },
       ]);
 
       await request(app.getHttpServer())
@@ -157,8 +155,8 @@ describe('auth', () => {
         .post(`/auth/registration-email-resending`)
         .send({ email: 'unknown@example.com' })
         .expect(HttpStatus.BAD_REQUEST);
-      expect(unknownBody.extensions).toEqual([
-        { message: expect.any(String), key: 'email' },
+      expect(unknownBody.errorsMessages).toEqual([
+        { message: expect.any(String), field: 'email' },
       ]);
 
       await userTestManger.registerUser(userInput);
@@ -213,7 +211,9 @@ describe('auth', () => {
         .send({})
         .expect(HttpStatus.BAD_REQUEST);
 
-      expect(responseBody.code).toBe(DomainExceptionCode.ValidationError);
+      expect(responseBody.errorsMessages).toEqual([
+        { message: expect.any(String), field: 'loginOrEmail' },
+      ]);
     });
   });
 
@@ -301,8 +301,8 @@ describe('auth', () => {
         .post(`/auth/new-password`)
         .send({ newPassword: 'anotherPassword1', recoveryCode })
         .expect(HttpStatus.BAD_REQUEST);
-      expect(reusedBody.extensions).toEqual([
-        { message: expect.any(String), key: 'recoveryCode' },
+      expect(reusedBody.errorsMessages).toEqual([
+        { message: expect.any(String), field: 'recoveryCode' },
       ]);
     });
 
@@ -312,9 +312,8 @@ describe('auth', () => {
         .send({ newPassword: '123', recoveryCode: 'some-code' })
         .expect(HttpStatus.BAD_REQUEST);
 
-      expect(responseBody.code).toBe(DomainExceptionCode.ValidationError);
-      expect(responseBody.extensions).toEqual([
-        { message: expect.any(String), key: 'newPassword' },
+      expect(responseBody.errorsMessages).toEqual([
+        { message: expect.any(String), field: 'newPassword' },
       ]);
     });
   });

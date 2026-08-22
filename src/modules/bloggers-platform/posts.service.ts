@@ -1,4 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { DomainException } from '../../core/exceptions/domain-exceptions';
+import { DomainExceptionCode } from '../../core/exceptions/domain-exception-codes';
 import { InjectModel } from '@nestjs/mongoose';
 import { Post, PostModelType } from './domain/post.entity';
 import { PostsRepository } from './infrastructure/posts.repository';
@@ -22,9 +24,11 @@ export class PostsService {
     const blog = await this.blogsRepository.findById(dto.blogId);
 
     if (!blog) {
-      throw new BadRequestException([
-        { field: 'blogId', message: 'blog not found' },
-      ]);
+      throw new DomainException({
+        code: DomainExceptionCode.BadRequest,
+        message: 'blog not found',
+        extensions: [{ message: 'blog not found', key: 'blogId' }],
+      });
     }
 
     return this.create({

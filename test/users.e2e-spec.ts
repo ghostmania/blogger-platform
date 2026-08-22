@@ -92,18 +92,15 @@ describe('users', () => {
       .auth('admin', 'qwerty')
       .expect(HttpStatus.BAD_REQUEST);
 
+    //тело 400-й ошибки по swagger-спеке: только errorsMessages с field
     expect(responseBody).toEqual({
-      timestamp: expect.any(String),
-      path: '/users',
-      message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
-      extensions: expect.arrayContaining([
-        { message: expect.any(String), key: 'login' },
-        { message: expect.any(String), key: 'password' },
-        { message: expect.any(String), key: 'email' },
+      errorsMessages: expect.arrayContaining([
+        { message: expect.any(String), field: 'login' },
+        { message: expect.any(String), field: 'password' },
+        { message: expect.any(String), field: 'email' },
       ]),
     });
-    expect(responseBody.extensions).toHaveLength(3);
+    expect(responseBody.errorsMessages).toHaveLength(3);
   });
 
   it('should return 400 if login or email already exists', async () => {
@@ -119,8 +116,8 @@ describe('users', () => {
       .send({ ...body, email: 'other@email.em' })
       .auth('admin', 'qwerty')
       .expect(HttpStatus.BAD_REQUEST);
-    expect(sameLoginBody.extensions).toEqual([
-      { message: expect.any(String), key: 'login' },
+    expect(sameLoginBody.errorsMessages).toEqual([
+      { message: expect.any(String), field: 'login' },
     ]);
 
     const { body: sameEmailBody } = await request(app.getHttpServer())
@@ -128,8 +125,8 @@ describe('users', () => {
       .send({ ...body, login: 'other' })
       .auth('admin', 'qwerty')
       .expect(HttpStatus.BAD_REQUEST);
-    expect(sameEmailBody.extensions).toEqual([
-      { message: expect.any(String), key: 'email' },
+    expect(sameEmailBody.errorsMessages).toEqual([
+      { message: expect.any(String), field: 'email' },
     ]);
   });
 
@@ -187,7 +184,9 @@ describe('users', () => {
       .auth('admin', 'qwerty')
       .expect(HttpStatus.BAD_REQUEST);
 
-    expect(responseBody.code).toBe(DomainExceptionCode.BadRequest);
+    expect(responseBody.errorsMessages).toEqual([
+      { message: expect.any(String), field: expect.any(String) },
+    ]);
   });
 
   it('should return users info while "me" request with correct accessTokens', async () => {

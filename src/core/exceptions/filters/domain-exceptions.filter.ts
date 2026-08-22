@@ -7,7 +7,7 @@ import {
 import { DomainException } from '../domain-exceptions';
 import { Request, Response } from 'express';
 import { DomainExceptionCode } from '../domain-exception-codes';
-import { ErrorResponseBody } from './error-response-body.type';
+import { ApiErrorResult, ErrorResponseBody } from './error-response-body.type';
 
 //https://docs.nestjs.com/exception-filters#exception-filters-1
 //Ошибки класса DomainException (instanceof DomainException)
@@ -19,9 +19,17 @@ export class DomainHttpExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     const status = this.mapToHttpStatus(exception.code);
-    const responseBody = this.buildResponseBody(exception, request.url);
 
-    response.status(status).json(responseBody);
+    //400 отдаём в формате APIErrorResult из swagger-спеки: его ждут автотесты.
+    //Для остальных статусов тело не специфицировано — отдаём подробный доменный формат
+    if (status === HttpStatus.BAD_REQUEST) {
+      response.status(status).json(this.buildApiErrorResult(exception));
+      return;
+    }
+
+    response
+      .status(status)
+      .json(this.buildResponseBody(exception, request.url));
   }
 
   private mapToHttpStatus(code: DomainExceptionCode): number {
@@ -43,6 +51,22 @@ export class DomainHttpExceptionsFilter implements ExceptionFilter {
       default:
         return HttpStatus.I_AM_A_TEAPOT;
     }
+  }
+
+  //extensions[].key -> field; если extensions пустые, поле определить нельзя — отдаём пустую строку
+  private buildApiErrorResult(exception: DomainException): ApiErrorResult {
+    if (!exception.extensions.length) {
+      return {
+        errorsMessages: [{ message: exception.message, field: '' }],
+      };
+    }
+
+    return {
+      errorsMessages: exception.extensions.map((extension) => ({
+        message: extension.message,
+        field: extension.key,
+      })),
+    };
   }
 
   private buildResponseBody(
