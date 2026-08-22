@@ -4,8 +4,6 @@ import { EmailService } from './email.service';
 
 //TODO: move to configService. will be in the following lessons
 const SMTP_URL = process.env.SMTP_URL;
-const SMTP_FROM =
-  process.env.SMTP_FROM ?? '"Blogger Platform" <noreply@blogger-platform.com>';
 
 //без таймаутов nodemailer висит на недоступном SMTP минутами: на serverless это
 //вешает весь инстанс, поэтому неудачную отправку ограничиваем несколькими секундами
@@ -42,11 +40,26 @@ function buildTransport() {
   };
 }
 
+//большинство провайдеров (gmail, yandex) отвергают письмо или подменяют отправителя,
+//если From не совпадает с аккаунтом, под которым авторизовались, — поэтому по умолчанию
+//берём адрес из SMTP_URL, а не выдуманный noreply@
+function buildFrom(): string {
+  if (process.env.SMTP_FROM) {
+    return process.env.SMTP_FROM;
+  }
+
+  if (SMTP_URL) {
+    return `"Blogger Platform" <${decodeURIComponent(new URL(SMTP_URL).username)}>`;
+  }
+
+  return '"Blogger Platform" <noreply@blogger-platform.com>';
+}
+
 @Module({
   imports: [
     MailerModule.forRoot({
       transport: buildTransport(),
-      defaults: { from: SMTP_FROM },
+      defaults: { from: buildFrom() },
     }),
   ],
   providers: [EmailService],
