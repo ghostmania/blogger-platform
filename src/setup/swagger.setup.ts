@@ -6,6 +6,9 @@ export function swaggerSetup(app: INestApplication) {
   const config = new DocumentBuilder()
     .setTitle('BLOGGER API')
     .addBearerAuth()
+    //имя схемы должно совпадать с аргументом @ApiBasicAuth('basicAuth') в контроллерах,
+    //иначе Swagger UI не покажет замок и не даст ввести логин суперадмина
+    .addBasicAuth({ type: 'http', scheme: 'basic' }, 'basicAuth')
     .setVersion('1.0')
     .build();
 

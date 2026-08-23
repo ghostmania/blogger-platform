@@ -11,13 +11,16 @@ const TEST_MONGO_URI =
 // Валидный по формату, но заведомо несуществующий ObjectId — чтобы получить 404, а не CastError 500.
 const NON_EXISTENT_ID = '507f1f77bcf86cd799439011';
 
+//запись в блоги доступна только суперадмину (basic auth)
+const ADMIN = { user: 'admin', pass: 'qwerty' };
+
 const validBlogInput = {
   name: 'new blog',
   description: 'description',
   websiteUrl: 'https://someurl.com',
 };
 
-describe('Blogs API (e2e) — without auth and validation', () => {
+describe('Blogs API (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
@@ -49,6 +52,7 @@ describe('Blogs API (e2e) — without auth and validation', () => {
   const createBlog = async (input = validBlogInput) => {
     const res = await request(app.getHttpServer())
       .post('/blogs')
+      .auth(ADMIN.user, ADMIN.pass)
       .send(input)
       .expect(201);
 
@@ -74,6 +78,7 @@ describe('Blogs API (e2e) — without auth and validation', () => {
     it('should create new blog; status 201; content: created blog', async () => {
       const res = await request(app.getHttpServer())
         .post('/blogs')
+        .auth(ADMIN.user, ADMIN.pass)
         .send(validBlogInput)
         .expect(201);
 
@@ -156,6 +161,7 @@ describe('Blogs API (e2e) — without auth and validation', () => {
 
       await request(app.getHttpServer())
         .put(`/blogs/${created.id}`)
+        .auth(ADMIN.user, ADMIN.pass)
         .send(updateInput)
         .expect(204);
 
@@ -173,6 +179,7 @@ describe('Blogs API (e2e) — without auth and validation', () => {
     it('should return 404 if :id not found', async () => {
       await request(app.getHttpServer())
         .put(`/blogs/${NON_EXISTENT_ID}`)
+        .auth(ADMIN.user, ADMIN.pass)
         .send(validBlogInput)
         .expect(404);
     });
@@ -184,6 +191,7 @@ describe('Blogs API (e2e) — without auth and validation', () => {
 
       await request(app.getHttpServer())
         .delete(`/blogs/${created.id}`)
+        .auth(ADMIN.user, ADMIN.pass)
         .expect(204);
 
       //удалённый блог больше не доступен
@@ -195,7 +203,45 @@ describe('Blogs API (e2e) — without auth and validation', () => {
     it('should return 404 if :id not found', async () => {
       await request(app.getHttpServer())
         .delete(`/blogs/${NON_EXISTENT_ID}`)
+        .auth(ADMIN.user, ADMIN.pass)
         .expect(404);
+    });
+  });
+
+  describe('basic auth', () => {
+    it('should return 401 for write operations without credentials', async () => {
+      const created = await createBlog();
+
+      await request(app.getHttpServer())
+        .post('/blogs')
+        .send(validBlogInput)
+        .expect(401);
+
+      await request(app.getHttpServer())
+        .put(`/blogs/${created.id}`)
+        .send(validBlogInput)
+        .expect(401);
+
+      await request(app.getHttpServer())
+        .delete(`/blogs/${created.id}`)
+        .expect(401);
+    });
+
+    it('should return 401 for write operations with wrong credentials', async () => {
+      await request(app.getHttpServer())
+        .post('/blogs')
+        .auth('admin', 'wrong-password')
+        .send(validBlogInput)
+        .expect(401);
+    });
+
+    it('should allow reads without credentials', async () => {
+      const created = await createBlog();
+
+      await request(app.getHttpServer()).get('/blogs').expect(200);
+      await request(app.getHttpServer())
+        .get(`/blogs/${created.id}`)
+        .expect(200);
     });
   });
 
