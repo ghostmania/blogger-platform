@@ -189,6 +189,29 @@ describe('auth', () => {
       expect(byEmail.accessToken).toEqual(expect.any(String));
     });
 
+    it('should set httpOnly refreshToken cookie and keep it out of the body', async () => {
+      await userTestManger.registerUser(userInput);
+
+      const response = await request(app.getHttpServer())
+        .post(`/auth/login`)
+        .send({
+          loginOrEmail: userInput.login,
+          password: userInput.password,
+        })
+        .expect(HttpStatus.OK);
+
+      const cookies = response.headers['set-cookie'] as unknown as string[];
+      const refreshTokenCookie = cookies?.find((cookie) =>
+        cookie.startsWith('refreshToken='),
+      );
+
+      expect(refreshTokenCookie).toBeDefined();
+      expect(refreshTokenCookie).toContain('HttpOnly');
+      expect(refreshTokenCookie).toContain('Secure');
+      //refreshToken живёт только в cookie — в теле ответа его быть не должно
+      expect(response.body).toEqual({ accessToken: expect.any(String) });
+    });
+
     it('should return 401 for wrong password or unknown user', async () => {
       await userTestManger.registerUser(userInput);
 

@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { UsersRepository } from '../infrastructure/users.repository';
-import { JwtService } from '@nestjs/jwt';
 import { UserContextDto } from '../guards/dto/user-context.dto';
 import { CryptoService } from './crypto.service';
 
+//проверка пары логин/пароль нужна passport-стратегии, а не сценарию —
+//выдача токенов живёт в LoginUserUseCase
 @Injectable()
 export class AuthService {
   constructor(
     private usersRepository: UsersRepository,
-    private jwtService: JwtService,
     private cryptoService: CryptoService,
   ) {}
 
@@ -32,13 +32,5 @@ export class AuthService {
     }
 
     return { id: user.id.toString() };
-  }
-
-  async login(userId: string) {
-    const accessToken = this.jwtService.sign({ id: userId } as UserContextDto);
-
-    return {
-      accessToken,
-    };
   }
 }

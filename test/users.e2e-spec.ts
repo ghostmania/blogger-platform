@@ -12,6 +12,7 @@ import {
   UserViewDto,
 } from '../src/modules/user-accounts/api/view-dto/users.view-dto';
 import { ACCESS_TOKEN_SECRET } from '../src/modules/user-accounts/constants/auth.constants';
+import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../src/modules/user-accounts/constants/auth-tokens.inject-constants';
 import { DomainExceptionCode } from '../src/core/exceptions/domain-exception-codes';
 
 const NON_EXISTENT_ID = '63189b06003380064c4193be';
@@ -25,12 +26,14 @@ describe('users', () => {
       'nest-bloggers-platform-test-users',
       //укорачиваем время жизни токена, чтобы протестировать протухший accessToken
       (moduleBuilder) =>
-        moduleBuilder.overrideProvider(JwtService).useValue(
-          new JwtService({
-            secret: ACCESS_TOKEN_SECRET,
-            signOptions: { expiresIn: '2s' },
-          }),
-        ),
+        moduleBuilder
+          .overrideProvider(ACCESS_TOKEN_STRATEGY_INJECT_TOKEN)
+          .useValue(
+            new JwtService({
+              secret: ACCESS_TOKEN_SECRET,
+              signOptions: { expiresIn: '2s' },
+            }),
+          ),
     );
     app = result.app;
     userTestManger = result.userTestManger;
