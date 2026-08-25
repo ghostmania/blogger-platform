@@ -38,6 +38,6 @@ export class RegisterUserUseCase implements ICommandHandler<
     );
     await this.usersRepository.save(user);
 
-    await this.emailNotifier.sendConfirmation(user.email, confirmCode);
+    this.emailNotifier.sendConfirmation(user.email, confirmCode);
   }
 }

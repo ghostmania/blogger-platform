@@ -34,6 +34,6 @@ export class RecoverPasswordUseCase implements ICommandHandler<
     );
     await this.usersRepository.save(user);
 
-    await this.emailNotifier.sendPasswordRecovery(user.email, recoveryCode);
+    this.emailNotifier.sendPasswordRecovery(user.email, recoveryCode);
   }
 }

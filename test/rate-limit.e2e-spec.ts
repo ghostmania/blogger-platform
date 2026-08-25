@@ -1,6 +1,7 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { initSettings } from './helpers/init-settings';
+import { EmailServiceMock } from './mock/email-service.mock';
 import { deleteAllData } from './helpers/delete-all-data';
 import { delay } from './helpers/delay';
 import {
@@ -13,6 +14,7 @@ import {
 //поэтому каждый тест бьёт по СВОЕМУ эндпоинту — иначе они мешали бы друг другу
 describe('ip-restriction (rate limit)', () => {
   let app: INestApplication;
+  let emailServiceMock: EmailServiceMock;
 
   beforeAll(async () => {
     const result = await initSettings(
@@ -21,6 +23,7 @@ describe('ip-restriction (rate limit)', () => {
       true,
     );
     app = result.app;
+    emailServiceMock = result.emailServiceMock;
   });
 
   afterAll(async () => {
@@ -87,4 +90,50 @@ describe('ip-restriction (rate limit)', () => {
       await request(app.getHttpServer()).get(`/blogs`).expect(HttpStatus.OK);
     }
   });
+});
+
+//регрессия: пока отправка письма ждалась внутри запроса, пять регистраций
+//растягивались дольше 10-секундного окна, ранние попытки успевали выпасть
+//из счётчика, и 429 не наступал никогда
+describe('ip-restriction with slow email delivery', () => {
+  let app: INestApplication;
+
+  const SLOW_SMTP_MS = 2500;
+
+  beforeAll(async () => {
+    const result = await initSettings(
+      'nest-bloggers-platform-test-rate-limit-slow',
+      undefined,
+      true,
+    );
+    app = result.app;
+
+    //имитируем реальный SMTP: доставка занимает секунды
+    jest
+      .spyOn(result.emailServiceMock, 'sendConfirmationEmail')
+      .mockImplementation(
+        () => new Promise((resolve) => setTimeout(resolve, SLOW_SMTP_MS)),
+      );
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('should still return 429 on the 6th registration', async () => {
+    const attempt = (i: number) =>
+      request(app.getHttpServer())
+        .post(`/auth/registration`)
+        .send({
+          login: `slow${i}`,
+          password: 'password123',
+          email: `slow${i}@example.com`,
+        });
+
+    for (let i = 0; i < RATE_LIMIT_MAX; ++i) {
+      await attempt(i).expect(HttpStatus.NO_CONTENT);
+    }
+
+    await attempt(RATE_LIMIT_MAX).expect(HttpStatus.TOO_MANY_REQUESTS);
+  }, 30_000);
 });
