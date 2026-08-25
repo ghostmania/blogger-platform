@@ -3,17 +3,23 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 
 import { User, UserSchema } from './domain/user.entity';
+import {
+  DeviceSession,
+  DeviceSessionSchema,
+} from './domain/device-session.entity';
 import { UsersController } from './api/users.controller';
 import { AuthController } from './api/auth.controller';
 import { SecurityDevicesController } from './api/security-devices.controller';
 
 import { UsersRepository } from './infrastructure/users.repository';
+import { SecurityDevicesRepository } from './infrastructure/security-devices.repository';
 import { UsersQueryRepository } from './infrastructure/query/users.query-repository';
 import { SecurityDevicesQueryRepository } from './infrastructure/query/security-devices.query-repository';
 import { AuthQueryRepository } from './infrastructure/query/auth.query-repository';
 import { UsersExternalQueryRepository } from './infrastructure/external-query/users.external-query-repository';
 
 import { AuthService } from './application/auth.service';
+import { AuthTokensService } from './application/auth-tokens.service';
 import { CryptoService } from './application/crypto.service';
 import { UsersExternalService } from './application/users.external-service';
 import { UserEmailNotifier } from './application/user-email-notifier.service';
@@ -28,13 +34,19 @@ import { ResendConfirmationEmailUseCase } from './application/usecases/resend-co
 import { RecoverPasswordUseCase } from './application/usecases/recover-password.usecase';
 import { SetNewPasswordUseCase } from './application/usecases/set-new-password.usecase';
 import { LoginUserUseCase } from './application/usecases/login-user.usecase';
+import { RefreshTokenUseCase } from './application/usecases/refresh-token.usecase';
+import { LogoutUseCase } from './application/usecases/logout.usecase';
+import { TerminateDeviceUseCase } from './application/usecases/terminate-device.usecase';
+import { TerminateOtherDevicesUseCase } from './application/usecases/terminate-other-devices.usecase';
 
 import { GetUsersQueryHandler } from './application/queries/get-users.query-handler';
 import { GetUserByIdQueryHandler } from './application/queries/get-user-by-id.query-handler';
 import { GetMeQueryHandler } from './application/queries/get-me.query-handler';
+import { GetDevicesQueryHandler } from './application/queries/get-devices.query-handler';
 
 import { LocalStrategy } from './guards/local/local.strategy';
 import { JwtStrategy } from './guards/bearer/jwt.strategy';
+import { RefreshTokenStrategy } from './guards/refresh/refresh-token.strategy';
 import { NotificationsModule } from '../notifications/notifications.module';
 import {
   ACCESS_TOKEN_STRATEGY_INJECT_TOKEN,
@@ -58,12 +70,17 @@ const commandHandlers = [
   RecoverPasswordUseCase,
   SetNewPasswordUseCase,
   LoginUserUseCase,
+  RefreshTokenUseCase,
+  LogoutUseCase,
+  TerminateDeviceUseCase,
+  TerminateOtherDevicesUseCase,
 ];
 
 const queryHandlers = [
   GetUsersQueryHandler,
   GetUserByIdQueryHandler,
   GetMeQueryHandler,
+  GetDevicesQueryHandler,
 ];
 
 //access и refresh подписываются разными секретами с разным TTL, поэтому в IoC
@@ -89,22 +106,28 @@ const tokenStrategies = [
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: DeviceSession.name, schema: DeviceSessionSchema },
+    ]),
     NotificationsModule,
   ],
   controllers: [UsersController, AuthController, SecurityDevicesController],
   providers: [
     UsersRepository,
+    SecurityDevicesRepository,
     UsersQueryRepository,
     SecurityDevicesQueryRepository,
     AuthQueryRepository,
     UsersExternalQueryRepository,
     AuthService,
+    AuthTokensService,
     CryptoService,
     UsersExternalService,
     UserEmailNotifier,
     LocalStrategy,
     JwtStrategy,
+    RefreshTokenStrategy,
     ...tokenStrategies,
     ...commandHandlers,
     ...queryHandlers,

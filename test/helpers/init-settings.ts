@@ -1,4 +1,5 @@
 import { getConnectionToken } from '@nestjs/mongoose';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { Test, TestingModuleBuilder } from '@nestjs/testing';
 import { Connection } from 'mongoose';
 import { appSetup } from '../../src/setup/app.setup';
@@ -12,6 +13,9 @@ export const initSettings = async (
   testDbName: string,
   //передаем callback, который получает ModuleBuilder, если хотим изменить настройку тестового модуля
   addSettingsToModuleBuilder?: (moduleBuilder: TestingModuleBuilder) => void,
+  //ip-restriction по умолчанию выключен: спеки бьют по auth-ручкам чаще 5 раз за 10с
+  //с одного адреса и упирались бы в 429. Включаем только в rate-limit спеке
+  enableRateLimit: boolean = false,
 ) => {
   //MONGO_URI надо выставить ДО импорта AppModule: MongooseModule.forRoot читает env при импорте модуля
   process.env.MONGO_URI = `mongodb://localhost:27017/${testDbName}`;
@@ -22,6 +26,12 @@ export const initSettings = async (
   })
     .overrideProvider(EmailService)
     .useClass(EmailServiceMock);
+
+  if (!enableRateLimit) {
+    testingModuleBuilder
+      .overrideGuard(ThrottlerGuard)
+      .useValue({ canActivate: () => true });
+  }
 
   if (addSettingsToModuleBuilder) {
     addSettingsToModuleBuilder(testingModuleBuilder);

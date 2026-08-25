@@ -1,11 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { InjectModel } from '@nestjs/mongoose';
 import { randomUUID } from 'crypto';
 import {
-  ACCESS_TOKEN_STRATEGY_INJECT_TOKEN,
-  REFRESH_TOKEN_STRATEGY_INJECT_TOKEN,
-} from '../../constants/auth-tokens.inject-constants';
+  DeviceSession,
+  DeviceSessionModelType,
+} from '../../domain/device-session.entity';
+import { SecurityDevicesRepository } from '../../infrastructure/security-devices.repository';
+import { AuthTokensService } from '../auth-tokens.service';
 
 export type LoginUserResult = {
   accessToken: string;
@@ -13,7 +14,11 @@ export type LoginUserResult = {
 };
 
 export class LoginUserCommand {
-  constructor(public userId: string) {}
+  constructor(
+    public userId: string,
+    public ip: string,
+    public userAgent: string,
+  ) {}
 }
 
 @CommandHandler(LoginUserCommand)
@@ -22,23 +27,36 @@ export class LoginUserUseCase implements ICommandHandler<
   LoginUserResult
 > {
   constructor(
-    @Inject(ACCESS_TOKEN_STRATEGY_INJECT_TOKEN)
-    private accessTokenContext: JwtService,
-
-    @Inject(REFRESH_TOKEN_STRATEGY_INJECT_TOKEN)
-    private refreshTokenContext: JwtService,
+    @InjectModel(DeviceSession.name)
+    private DeviceSessionModel: DeviceSessionModelType,
+    private securityDevicesRepository: SecurityDevicesRepository,
+    private authTokensService: AuthTokensService,
   ) {}
 
-  async execute({ userId }: LoginUserCommand): Promise<LoginUserResult> {
-    const accessToken = this.accessTokenContext.sign({ id: userId });
+  async execute({
+    userId,
+    ip,
+    userAgent,
+  }: LoginUserCommand): Promise<LoginUserResult> {
+    //каждый логин — это новое устройство: отдельный deviceId и отдельная сессия,
+    //поэтому один и тот же юзер может держать несколько независимых сессий
+    const deviceId = randomUUID();
 
-    //deviceId — заглушка: обновление пары токенов (/auth/refresh-token)
-    //и учёт сессий устройств появятся в следующем задании
-    const refreshToken = this.refreshTokenContext.sign({
-      id: userId,
-      deviceId: randomUUID(),
+    const accessToken = this.authTokensService.createAccessToken(userId);
+    const { token, lastActiveDate, expirationDate } =
+      this.authTokensService.createRefreshToken(userId, deviceId);
+
+    const session = this.DeviceSessionModel.createInstance({
+      userId,
+      deviceId,
+      ip,
+      title: userAgent,
+      lastActiveDate,
+      expirationDate,
     });
 
-    return { accessToken, refreshToken };
+    await this.securityDevicesRepository.save(session);
+
+    return { accessToken, refreshToken: token };
   }
 }

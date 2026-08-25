@@ -5,7 +5,9 @@ import {
   MeViewDto,
   UserViewDto,
 } from '../../src/modules/user-accounts/api/view-dto/users.view-dto';
+import { DeviceViewDto } from '../../src/modules/user-accounts/api/view-dto/devices.view-dto';
 import { delay } from './delay';
+import { extractRefreshToken, refreshTokenCookie } from './cookies';
 
 export class UsersTestManager {
   constructor(private app: INestApplication) {}
@@ -46,6 +48,83 @@ export class UsersTestManager {
     return {
       accessToken: response.body.accessToken,
     };
+  }
+
+  //логин, из которого нужны обе половины пары токенов (refresh лежит в cookie)
+  async loginWithTokens(
+    loginOrEmail: string,
+    password: string,
+    userAgent: string = 'jest-test-agent',
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const response = await request(this.app.getHttpServer())
+      .post(`/auth/login`)
+      .set('User-Agent', userAgent)
+      .send({ loginOrEmail, password })
+      .expect(HttpStatus.OK);
+
+    return {
+      accessToken: response.body.accessToken,
+      refreshToken: extractRefreshToken(response),
+    };
+  }
+
+  async refreshTokens(
+    refreshToken: string,
+    statusCode: number = HttpStatus.OK,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const response = await request(this.app.getHttpServer())
+      .post(`/auth/refresh-token`)
+      .set('Cookie', refreshTokenCookie(refreshToken))
+      .expect(statusCode);
+
+    if (statusCode !== HttpStatus.OK) {
+      return { accessToken: '', refreshToken: '' };
+    }
+
+    return {
+      accessToken: response.body.accessToken,
+      refreshToken: extractRefreshToken(response),
+    };
+  }
+
+  async logout(
+    refreshToken: string,
+    statusCode: number = HttpStatus.NO_CONTENT,
+  ): Promise<void> {
+    await request(this.app.getHttpServer())
+      .post(`/auth/logout`)
+      .set('Cookie', refreshTokenCookie(refreshToken))
+      .expect(statusCode);
+  }
+
+  async getDevices(
+    refreshToken: string,
+    statusCode: number = HttpStatus.OK,
+  ): Promise<DeviceViewDto[]> {
+    const response = await request(this.app.getHttpServer())
+      .get(`/security/devices`)
+      .set('Cookie', refreshTokenCookie(refreshToken))
+      .expect(statusCode);
+
+    return response.body;
+  }
+
+  //регистрирует юзера через админскую ручку и логинит его нужное число раз,
+  //каждый раз с новым User-Agent — так получаются разные device-сессии
+  async loginFromSeveralDevices(
+    loginOrEmail: string,
+    password: string,
+    count: number,
+  ): Promise<{ accessToken: string; refreshToken: string }[]> {
+    const sessions: { accessToken: string; refreshToken: string }[] = [];
+
+    for (let i = 0; i < count; ++i) {
+      sessions.push(
+        await this.loginWithTokens(loginOrEmail, password, `device-${i}`),
+      );
+    }
+
+    return sessions;
   }
 
   async me(
