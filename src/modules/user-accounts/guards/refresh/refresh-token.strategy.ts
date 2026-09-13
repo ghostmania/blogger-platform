@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { SecurityDevicesRepository } from '../../infrastructure/security-devices.repository';
+import { SecurityDevicesRepository } from '../../infrastructure/security-devices.repository.abstract';
 import {
   RefreshTokenContextDto,
   RefreshTokenPayloadDto,

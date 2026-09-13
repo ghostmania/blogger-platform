@@ -1,5 +1,5 @@
-import { UserDocument } from '../../domain/user.entity';
 import { OmitType } from '@nestjs/swagger';
+import { UserEntity } from '../../domain/entity.contracts';
 
 export class UserViewDto {
   id: string;
@@ -7,12 +7,14 @@ export class UserViewDto {
   email: string;
   createdAt: Date;
 
-  static mapToView(user: UserDocument): UserViewDto {
+  //принимает контракт сущности, а не UserDocument: одна и та же view-модель
+  //собирается и из монго-документа, и из SQL-сущности
+  static mapToView(user: UserEntity): UserViewDto {
     const dto = new UserViewDto();
 
     dto.email = user.email;
     dto.login = user.login;
-    dto.id = user._id.toString();
+    dto.id = user.id;
     dto.createdAt = user.createdAt;
 
     return dto;
@@ -26,12 +28,12 @@ export class MeViewDto extends OmitType(UserViewDto, [
 ] as const) {
   userId: string;
 
-  static mapToView(user: UserDocument): MeViewDto {
+  static mapToView(user: UserEntity): MeViewDto {
     const dto = new MeViewDto();
 
     dto.email = user.email;
     dto.login = user.login;
-    dto.userId = user._id.toString();
+    dto.userId = user.id;
 
     return dto;
   }

@@ -86,8 +86,14 @@ describe('ip-restriction (rate limit)', () => {
   }, 30_000);
 
   it('should not rate limit endpoints outside the auth flow', async () => {
+    //раньше здесь был /blogs, но bloggers-platform временно отключён в
+    //app.module на время перевода на SQL. Подойдёт любой живой не-auth роут:
+    //ThrottlerGuard навешен точечно на auth-ручки, а на /users его нет
     for (let i = 0; i < RATE_LIMIT_MAX + 3; ++i) {
-      await request(app.getHttpServer()).get(`/blogs`).expect(HttpStatus.OK);
+      await request(app.getHttpServer())
+        .get(`/users`)
+        .auth('admin', 'qwerty')
+        .expect(HttpStatus.OK);
     }
   });
 });

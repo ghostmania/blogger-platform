@@ -1,11 +1,10 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Types } from 'mongoose';
 import { UpdateUserDto } from '../../dto/create-user.dto';
-import { UsersRepository } from '../../infrastructure/users.repository';
+import { UsersRepository } from '../../infrastructure/users.repository.abstract';
 
 export class UpdateUserCommand {
   constructor(
-    public id: Types.ObjectId,
+    public id: string,
     public dto: UpdateUserDto,
   ) {}
 }
@@ -25,6 +24,6 @@ export class UpdateUserUseCase implements ICommandHandler<
 
     await this.usersRepository.save(user);
 
-    return user._id.toString();
+    return user.id;
   }
 }

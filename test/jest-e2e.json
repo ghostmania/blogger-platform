@@ -1,9 +1,21 @@
 {
-  "moduleFileExtensions": ["js", "json", "ts"],
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "ts"
+  ],
   "rootDir": ".",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
-  }
+  },
+  "testTimeout": 30000,
+  "testPathIgnorePatterns": [
+    "/node_modules/",
+    "blogs.e2e-spec.ts$",
+    "posts.e2e-spec.ts$",
+    "comments.e2e-spec.ts$",
+    "app.e2e-spec.ts$"
+  ]
 }

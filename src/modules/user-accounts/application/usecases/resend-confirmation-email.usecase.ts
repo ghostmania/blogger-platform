@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
-import { UsersRepository } from '../../infrastructure/users.repository';
+import { UsersRepository } from '../../infrastructure/users.repository.abstract';
 import { UserEmailNotifier } from '../user-email-notifier.service';
 import { DomainException } from '../../../../core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from '../../../../core/exceptions/domain-exception-codes';

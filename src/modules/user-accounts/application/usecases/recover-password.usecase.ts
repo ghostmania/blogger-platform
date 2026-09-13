@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
-import { UsersRepository } from '../../infrastructure/users.repository';
+import { UsersRepository } from '../../infrastructure/users.repository.abstract';
 import { UserEmailNotifier } from '../user-email-notifier.service';
 import { RECOVERY_CODE_TTL_MS } from '../../constants/auth.constants';
 

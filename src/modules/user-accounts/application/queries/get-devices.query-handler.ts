@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { SecurityDevicesQueryRepository } from '../../infrastructure/query/security-devices.query-repository';
+import { SecurityDevicesQueryRepository } from '../../infrastructure/query/security-devices.query-repository.abstract';
 import { DeviceViewDto } from '../../api/view-dto/devices.view-dto';
 
 export class GetDevicesQuery {

@@ -5,8 +5,9 @@ import { UserAccountsModule } from './modules/user-accounts/user-accounts.module
 import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TestingModule } from './modules/testing/testing.module';
-import { BloggersPlatformModule } from './modules/bloggers-platform/bloggers-platform.module';
+// import { BloggersPlatformModule } from './modules/bloggers-platform/bloggers-platform.module';
 import { CoreModule } from './core/core.module';
+import { DatabaseModule } from './core/database/database.module';
 import { APP_FILTER } from '@nestjs/core';
 import { AllHttpExceptionsFilter } from './core/exceptions/filters/all-exceptions.filter';
 import { DomainHttpExceptionsFilter } from './core/exceptions/filters/domain-exceptions.filter';
@@ -17,6 +18,8 @@ import {
 
 @Module({
   imports: [
+    //Postgres-пул для SQL-реализации user-accounts
+    DatabaseModule,
     MongooseModule.forRoot(
       process.env.MONGO_URI ?? 'mongodb://localhost/nest-bloggers-platform',
     ), //локально дефолт, на проде — MONGO_URI из окружения (напр. MongoDB Atlas)
@@ -27,7 +30,11 @@ import {
     }),
     UserAccountsModule, //все модули должны быть заимпортированы в корневой модуль, либо напрямую, либо по цепочке (через другие модули)
     TestingModule,
-    BloggersPlatformModule,
+    //ОТКЛЮЧЁН НА ВРЕМЯ ПЕРЕВОДА НА SQL.
+    //Роуты /blogs, /posts, /comments не поднимаются; код модуля не тронут —
+    //чтобы вернуть, достаточно раскомментировать эту строку и импорт выше.
+    //Сейчас на SQL работают только /auth/*, /security/devices, /users, /testing.
+    // BloggersPlatformModule,
     CoreModule,
   ],
   controllers: [AppController],

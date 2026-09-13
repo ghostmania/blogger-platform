@@ -5,15 +5,24 @@ import {
   DeviceSessionDocument,
   DeviceSessionModelType,
 } from '../domain/device-session.entity';
+import { CreateDeviceSessionDomainDto } from '../domain/dto/create-device-session.domain.dto';
+import { SecurityDevicesRepository } from './security-devices.repository.abstract';
 import { DomainException } from '../../../core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from '../../../core/exceptions/domain-exception-codes';
 
+//MongoDB-реализация контракта SecurityDevicesRepository
 @Injectable()
-export class SecurityDevicesRepository {
+export class SecurityDevicesMongoRepository extends SecurityDevicesRepository {
   constructor(
     @InjectModel(DeviceSession.name)
     private DeviceSessionModel: DeviceSessionModelType,
-  ) {}
+  ) {
+    super();
+  }
+
+  createInstance(dto: CreateDeviceSessionDomainDto): DeviceSessionDocument {
+    return this.DeviceSessionModel.createInstance(dto);
+  }
 
   async save(session: DeviceSessionDocument): Promise<void> {
     await session.save();

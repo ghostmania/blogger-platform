@@ -1,8 +1,7 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Types } from 'mongoose';
 import { randomUUID } from 'crypto';
 import { CreateUserDto } from '../../dto/create-user.dto';
-import { UsersRepository } from '../../infrastructure/users.repository';
+import { UsersRepository } from '../../infrastructure/users.repository.abstract';
 import { UserEmailNotifier } from '../user-email-notifier.service';
 import { CreateUserCommand } from './create-user.usecase';
 import { CONFIRMATION_CODE_TTL_MS } from '../../constants/auth.constants';
@@ -25,7 +24,7 @@ export class RegisterUserUseCase implements ICommandHandler<
   async execute({ dto }: RegisterUserCommand): Promise<void> {
     const createdUserId = await this.commandBus.execute<
       CreateUserCommand,
-      Types.ObjectId
+      string
     >(new CreateUserCommand(dto));
 
     const confirmCode = randomUUID();

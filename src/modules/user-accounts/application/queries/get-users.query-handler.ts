@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { UsersQueryRepository } from '../../infrastructure/query/users.query-repository';
+import { UsersQueryRepository } from '../../infrastructure/query/users.query-repository.abstract';
 import { GetUsersQueryParams } from '../../api/input-dto/get-users-query-params.input-dto';
 import { UserViewDto } from '../../api/view-dto/users.view-dto';
 import { PaginatedViewDto } from '../../../../core/dto/base.paginated.view-dto';

@@ -139,20 +139,25 @@ export class UsersTestManager {
     return response.body;
   }
 
+  //юзеры создаются СТРОГО последовательно: тесты сортировки опираются на то,
+  //что createdAt возрастает вместе с индексом. Раньше здесь не было await,
+  //и запросы уходили параллельно — на быстрой локальной монге порядок
+  //случайно сохранялся, а на удалённой БД (сеть дольше, чем delay) ломался
   async createSeveralUsers(count: number): Promise<UserViewDto[]> {
-    const usersPromises = [] as Promise<UserViewDto>[];
+    const users = [] as UserViewDto[];
 
     for (let i = 0; i < count; ++i) {
       await delay(50);
-      const response = this.createUser({
-        login: `test` + i,
-        email: `test${i}@gmail.com`,
-        password: '123456789',
-      });
-      usersPromises.push(response);
+      users.push(
+        await this.createUser({
+          login: `test` + i,
+          email: `test${i}@gmail.com`,
+          password: '123456789',
+        }),
+      );
     }
 
-    return Promise.all(usersPromises);
+    return users;
   }
 
   async createAndLoginSeveralUsers(

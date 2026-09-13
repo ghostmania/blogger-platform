@@ -1,3 +1,6 @@
+//.env нужен ДО импорта AppModule: DatabaseModule читает DATABASE_URL
+//при создании провайдера PG_POOL
+import 'dotenv/config';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { Test, TestingModuleBuilder } from '@nestjs/testing';
@@ -7,6 +10,9 @@ import { UsersTestManager } from './users-test-manager';
 import { deleteAllData } from './delete-all-data';
 import { EmailService } from '../../src/modules/notifications/email.service';
 import { EmailServiceMock } from '../mock/email-service.mock';
+import { Pool } from 'pg';
+import { PG_POOL } from '../../src/core/database/database.constants';
+import { applySchema } from '../../src/core/database/apply-schema';
 
 export const initSettings = async (
   //отдельная БД на спеку — параллельные spec-файлы не затирают данные друг друга
@@ -44,6 +50,9 @@ export const initSettings = async (
   appSetup(app);
 
   await app.init();
+
+  //SQL-схема должна существовать до первого запроса; DDL идемпотентен
+  await applySchema(app.get<Pool>(PG_POOL));
 
   const databaseConnection = app.get<Connection>(getConnectionToken());
   const httpServer = app.getHttpServer();

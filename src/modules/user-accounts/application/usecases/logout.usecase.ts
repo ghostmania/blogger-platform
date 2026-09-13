@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { SecurityDevicesRepository } from '../../infrastructure/security-devices.repository';
+import { SecurityDevicesRepository } from '../../infrastructure/security-devices.repository.abstract';
 
 export class LogoutCommand {
   constructor(public deviceId: string) {}

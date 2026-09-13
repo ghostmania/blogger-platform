@@ -1,20 +1,14 @@
-import { User, UserModelType } from '../../domain/user.entity';
-import { InjectModel } from '@nestjs/mongoose';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { UsersRepository } from '../users.repository.abstract';
 import { UserExternalDto } from './external-dto/users.external-dto';
 
+//как и AuthQueryRepository, работает через контракт и не дублируется под SQL
 @Injectable()
 export class UsersExternalQueryRepository {
-  constructor(
-    @InjectModel(User.name)
-    private UserModel: UserModelType,
-  ) {}
+  constructor(private usersRepository: UsersRepository) {}
 
   async getByIdOrNotFoundFail(id: string): Promise<UserExternalDto> {
-    const user = await this.UserModel.findOne({
-      _id: id,
-      deletedAt: null,
-    });
+    const user = await this.usersRepository.findById(id);
 
     if (!user) {
       throw new NotFoundException('user not found');

@@ -7,7 +7,6 @@ import {
   DomainException,
   Extension,
 } from '../core/exceptions/domain-exceptions';
-import { ObjectIdValidationTransformationPipe } from '../core/pipes/object-id-validation-transformation-pipe.service';
 import { DomainExceptionCode } from '../core/exceptions/domain-exception-codes';
 
 //функция использует рекурсию для обхода объекта children при вложенных полях при валидации
@@ -42,7 +41,6 @@ export const errorFormatter = (
 export function pipesSetup(app: INestApplication) {
   //Глобальный пайп для валидации и трансформации входящих данных.
   app.useGlobalPipes(
-    new ObjectIdValidationTransformationPipe(),
     new ValidationPipe({
       //class-transformer создает экземпляр dto
       //соответственно применятся значения по-умолчанию

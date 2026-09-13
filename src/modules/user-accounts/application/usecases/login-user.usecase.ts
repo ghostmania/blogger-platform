@@ -1,11 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectModel } from '@nestjs/mongoose';
 import { randomUUID } from 'crypto';
-import {
-  DeviceSession,
-  DeviceSessionModelType,
-} from '../../domain/device-session.entity';
-import { SecurityDevicesRepository } from '../../infrastructure/security-devices.repository';
+import { SecurityDevicesRepository } from '../../infrastructure/security-devices.repository.abstract';
 import { AuthTokensService } from '../auth-tokens.service';
 
 export type LoginUserResult = {
@@ -22,13 +17,11 @@ export class LoginUserCommand {
 }
 
 @CommandHandler(LoginUserCommand)
-export class LoginUserUseCase implements ICommandHandler<
-  LoginUserCommand,
-  LoginUserResult
-> {
+export class LoginUserUseCase
+  implements ICommandHandler<LoginUserCommand, LoginUserResult>
+{
   constructor(
-    @InjectModel(DeviceSession.name)
-    private DeviceSessionModel: DeviceSessionModelType,
+    //как и в CreateUserUseCase: модель мангуста ушла, сессию создаёт репозиторий
     private securityDevicesRepository: SecurityDevicesRepository,
     private authTokensService: AuthTokensService,
   ) {}
@@ -46,7 +39,7 @@ export class LoginUserUseCase implements ICommandHandler<
     const { token, lastActiveDate, expirationDate } =
       this.authTokensService.createRefreshToken(userId, deviceId);
 
-    const session = this.DeviceSessionModel.createInstance({
+    const session = this.securityDevicesRepository.createInstance({
       userId,
       deviceId,
       ip,

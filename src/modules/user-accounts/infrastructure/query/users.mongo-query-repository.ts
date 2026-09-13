@@ -1,6 +1,7 @@
 import { User, UserModelType } from '../../domain/user.entity';
 import { InjectModel } from '@nestjs/mongoose';
 import { UserViewDto } from '../../api/view-dto/users.view-dto';
+import { UsersQueryRepository } from './users.query-repository.abstract';
 import { Injectable } from '@nestjs/common';
 import { DomainException } from '../../../../core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from '../../../../core/exceptions/domain-exception-codes';
@@ -10,11 +11,15 @@ import { PaginatedViewDto } from '../../../../core/dto/base.paginated.view-dto';
 import { GetUsersQueryParams } from '../../api/input-dto/get-users-query-params.input-dto';
 
 @Injectable()
-export class UsersQueryRepository {
+//MongoDB-реализация read-модели. Сравните с UsersSqlQueryRepository:
+//фильтр здесь — объект с $or и $regex, там — WHERE с ILIKE и параметрами
+export class UsersMongoQueryRepository extends UsersQueryRepository {
   constructor(
     @InjectModel(User.name)
     private UserModel: UserModelType,
-  ) {}
+  ) {
+    super();
+  }
 
   async getByIdOrNotFoundFail(id: string): Promise<UserViewDto> {
     const user = await this.UserModel.findOne({

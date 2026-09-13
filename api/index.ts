@@ -1,3 +1,6 @@
+//.env читается до импорта AppModule: фабрика PG_POOL берёт DATABASE_URL
+//при создании провайдера
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
 import { appSetup } from '../src/setup/app.setup';

@@ -1,7 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Types } from 'mongoose';
 import { CreateUserDto } from '../../dto/create-user.dto';
-import { UsersRepository } from '../../infrastructure/users.repository';
+import { UsersRepository } from '../../infrastructure/users.repository.abstract';
 import { CreateUserCommand } from './create-user.usecase';
 
 export class CreateConfirmedUserCommand {
@@ -12,17 +11,17 @@ export class CreateConfirmedUserCommand {
 @CommandHandler(CreateConfirmedUserCommand)
 export class CreateConfirmedUserUseCase implements ICommandHandler<
   CreateConfirmedUserCommand,
-  Types.ObjectId
+  string
 > {
   constructor(
     private commandBus: CommandBus,
     private usersRepository: UsersRepository,
   ) {}
 
-  async execute({ dto }: CreateConfirmedUserCommand): Promise<Types.ObjectId> {
+  async execute({ dto }: CreateConfirmedUserCommand): Promise<string> {
     const userId = await this.commandBus.execute<
       CreateUserCommand,
-      Types.ObjectId
+      string
     >(new CreateUserCommand(dto));
 
     const user = await this.usersRepository.findOrNotFoundFail(userId);

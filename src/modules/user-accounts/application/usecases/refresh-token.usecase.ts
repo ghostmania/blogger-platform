@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { SecurityDevicesRepository } from '../../infrastructure/security-devices.repository';
+import { SecurityDevicesRepository } from '../../infrastructure/security-devices.repository.abstract';
 import { AuthTokensService } from '../auth-tokens.service';
 import { DomainException } from '../../../../core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from '../../../../core/exceptions/domain-exception-codes';
