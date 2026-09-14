@@ -15,6 +15,7 @@ import {
   RATE_LIMIT_MAX,
   RATE_LIMIT_WINDOW_MS,
 } from './modules/user-accounts/constants/auth.constants';
+import { SadminModule } from './modules/super-admin/sadmin.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import {
     //Сейчас на SQL работают только /auth/*, /security/devices, /users, /testing.
     // BloggersPlatformModule,
     CoreModule,
+    SadminModule,
   ],
   controllers: [AppController],
   providers: [
