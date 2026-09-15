@@ -22,10 +22,12 @@ export class TestingController {
   @Delete('all-data')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteAll() {
+    console.log(`delete all start`);
     await Promise.all([
       // this.clearMongo(),
       this.clearPostgres(),
     ]);
+    console.log(`delete all end`);
 
     return {
       status: 'succeeded',
