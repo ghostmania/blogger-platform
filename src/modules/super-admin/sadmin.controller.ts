@@ -24,7 +24,6 @@ import { CreateConfirmedUserCommand } from '../user-accounts/application/usecase
 import { BasicAuthGuard } from '../user-accounts/guards/basic/basic-auth.guard';
 
 @Controller('sa')
-@UseGuards(BasicAuthGuard)
 export class SadminController {
   constructor(
     private queryBus: QueryBus,
@@ -46,7 +45,8 @@ export class SadminController {
   }
 
   @Post('users')
-  @HttpCode(HttpStatus.UNAUTHORIZED)
+  // @HttpCode(HttpStatus.UNAUTHORIZED)
+  @UseGuards(BasicAuthGuard)
   async createUser(@Body() body: CreateUserInputDto): Promise<UserViewDto> {
     //созданный админом юзер сразу считается подтверждённым
     const userId = await this.commandBus.execute<
