@@ -36,13 +36,13 @@ export class SadminController {
   }
 
   @ApiParam({ name: 'id' }) //для сваггера
-  @Delete(':id')
+  @Delete('users/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteUser(@Param('id', IdValidationPipe) id: string): Promise<void> {
     return this.commandBus.execute(new DeleteUserCommand(id));
   }
 
-  @Post()
+  @Post('users')
   async createUser(@Body() body: CreateUserInputDto): Promise<UserViewDto> {
     //созданный админом юзер сразу считается подтверждённым
     const userId = await this.commandBus.execute<

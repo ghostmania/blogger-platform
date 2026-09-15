@@ -12,7 +12,7 @@ import { AuthController } from './api/auth.controller';
 import { SecurityDevicesController } from './api/security-devices.controller';
 
 import { UsersRepository } from './infrastructure/users.repository.abstract';
-import { UsersMongoRepository } from './infrastructure/users.mongo-repository';
+// import { UsersMongoRepository } from './infrastructure/users.mongo-repository';
 import { UsersSqlRepository } from './infrastructure/sql/users.sql-repository';
 import { SecurityDevicesRepository } from './infrastructure/security-devices.repository.abstract';
 import { SecurityDevicesMongoRepository } from './infrastructure/security-devices.mongo-repository';
@@ -104,10 +104,15 @@ const queryHandlers = [
 const USE_SQL = (process.env.USER_ACCOUNTS_DB ?? 'sql') !== 'mongo';
 
 const persistenceProviders = [
-  { provide: UsersRepository, useClass: USE_SQL ? UsersSqlRepository : UsersMongoRepository },
+  {
+    provide: UsersRepository,
+    useClass: UsersSqlRepository,
+  },
   {
     provide: SecurityDevicesRepository,
-    useClass: USE_SQL ? SecurityDevicesSqlRepository : SecurityDevicesMongoRepository,
+    useClass: USE_SQL
+      ? SecurityDevicesSqlRepository
+      : SecurityDevicesMongoRepository,
   },
   {
     provide: UsersQueryRepository,

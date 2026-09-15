@@ -1,10 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Pool } from 'pg';
 import { PG_POOL } from '../../../../core/database/database.constants';
-import {
-  UserSqlEntity,
-  UserRow,
-} from '../../domain/sql/user.sql-entity';
+import { UserSqlEntity, UserRow } from '../../domain/sql/user.sql-entity';
 import { CreateUserDomainDto } from '../../domain/dto/create-user.domain.dto';
 import { UsersRepository } from '../users.repository.abstract';
 import { DomainException } from '../../../../core/exceptions/domain-exceptions';
@@ -118,6 +115,19 @@ export class UsersSqlRepository extends UsersRepository {
         user.deletedAt,
       ],
     );
+  }
+
+  async deleteById(id: string): Promise<void> {
+    let user = await this.findById(id);
+    if (user) {
+      await this.pool.query(
+        `UPDATE users
+     SET deleted_at = now(),
+         updated_at = now()
+     WHERE id = $1`,
+        [id],
+      );
+    }
   }
 
   findById(id: string): Promise<UserSqlEntity | null> {

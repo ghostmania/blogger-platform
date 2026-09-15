@@ -17,6 +17,6 @@ export class DeleteUserUseCase implements ICommandHandler<
 
     user.makeDeleted();
 
-    await this.usersRepository.save(user);
+    await this.usersRepository.deleteById(id);
   }
 }

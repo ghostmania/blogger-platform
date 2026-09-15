@@ -29,7 +29,7 @@ export abstract class UsersRepository {
 
   abstract findByConfirmationCode(code: string): Promise<UserEntity | null>;
 
-  abstract findByPasswordRecoveryCode(
-    code: string,
-  ): Promise<UserEntity | null>;
+  abstract findByPasswordRecoveryCode(code: string): Promise<UserEntity | null>;
+
+  abstract deleteById(id: string): Promise<void>;
 }
