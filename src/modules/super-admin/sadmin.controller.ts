@@ -8,6 +8,7 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
@@ -20,8 +21,10 @@ import { DeleteUserCommand } from '../user-accounts/application/usecases/delete-
 import { CreateUserInputDto } from '../user-accounts/api/input-dto/users.input-dto';
 import { GetUserByIdQuery } from '../user-accounts/application/queries/get-user-by-id.query-handler';
 import { CreateConfirmedUserCommand } from '../user-accounts/application/usecases/create-confirmed-user.usecase';
+import { BasicAuthGuard } from '../user-accounts/guards/basic/basic-auth.guard';
 
 @Controller('sa')
+@UseGuards(BasicAuthGuard)
 export class SadminController {
   constructor(
     private queryBus: QueryBus,
@@ -43,6 +46,7 @@ export class SadminController {
   }
 
   @Post('users')
+  @HttpCode(HttpStatus.UNAUTHORIZED)
   async createUser(@Body() body: CreateUserInputDto): Promise<UserViewDto> {
     //созданный админом юзер сразу считается подтверждённым
     const userId = await this.commandBus.execute<
