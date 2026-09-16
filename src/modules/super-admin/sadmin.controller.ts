@@ -22,6 +22,10 @@ import { CreateUserInputDto } from '../user-accounts/api/input-dto/users.input-d
 import { GetUserByIdQuery } from '../user-accounts/application/queries/get-user-by-id.query-handler';
 import { CreateConfirmedUserCommand } from '../user-accounts/application/usecases/create-confirmed-user.usecase';
 import { BasicAuthGuard } from '../user-accounts/guards/basic/basic-auth.guard';
+import { CreateBlogInputDto } from '../bloggers-platform/blogs/api/input-dto/create-blog.input-dto';
+import { BlogViewDto } from '../bloggers-platform/blogs/api/view-dto/blogs.view-dto';
+import { CreateBlogCommand } from '../bloggers-platform/blogs/application/usecases/create-blog.usecase';
+import { GetBlogByIdQuery } from '../bloggers-platform/blogs/application/queries/get-blog-by-id.query-handler';
 
 @Controller('sa')
 export class SadminController {
@@ -56,5 +60,17 @@ export class SadminController {
     >(new CreateConfirmedUserCommand(body));
 
     return this.queryBus.execute(new GetUserByIdQuery(userId));
+  }
+
+  // create blog as admin
+  @Post('blogs')
+  // @HttpCode(HttpStatus.UNAUTHORIZED)
+  @UseGuards(BasicAuthGuard)
+  async createBlog(@Body() body: CreateBlogInputDto): Promise<BlogViewDto> {
+    const blogId = await this.commandBus.execute<
+    CreateBlogCommand,
+    string
+    >(new CreateBlogCommand(body));
+    return this.queryBus.execute(new GetBlogByIdQuery(blogId));
   }
 }

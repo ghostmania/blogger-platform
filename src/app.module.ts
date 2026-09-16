@@ -16,6 +16,7 @@ import {
   RATE_LIMIT_WINDOW_MS,
 } from './modules/user-accounts/constants/auth.constants';
 import { SadminModule } from './modules/super-admin/sadmin.module';
+import { BloggersPlatformModule } from './modules/bloggers-platform/bloggers-platform.module';
 
 @Module({
   imports: [
@@ -35,7 +36,7 @@ import { SadminModule } from './modules/super-admin/sadmin.module';
     //Роуты /blogs, /posts, /comments не поднимаются; код модуля не тронут —
     //чтобы вернуть, достаточно раскомментировать эту строку и импорт выше.
     //Сейчас на SQL работают только /auth/*, /security/devices, /users, /testing.
-    // BloggersPlatformModule,
+    BloggersPlatformModule,
     CoreModule,
     SadminModule,
   ],

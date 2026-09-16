@@ -1,8 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectModel } from '@nestjs/mongoose';
-import { Blog, BlogModelType } from '../../domain/blog.entity';
-import { BlogsRepository } from '../../infrastructure/blogs.repository';
 import { CreateBlogInputDto } from '../../api/input-dto/create-blog.input-dto';
+import { BlogsSqlRepository } from '../../infrastructure/sql/blogs.sql-repository';
 
 export class CreateBlogCommand {
   constructor(public dto: CreateBlogInputDto) {}
@@ -14,21 +12,25 @@ export class CreateBlogUseCase implements ICommandHandler<
   string
 > {
   constructor(
-    //инжектирование модели через DI
-    @InjectModel(Blog.name)
-    private BlogModel: BlogModelType,
-    private blogsRepository: BlogsRepository,
+    private blogsRepository: BlogsSqlRepository,
   ) {}
 
   async execute({ dto }: CreateBlogCommand): Promise<string> {
-    const blog = this.BlogModel.createInstance({
+    const blog = this.blogsRepository.createInstance({
       name: dto.name,
       description: dto.description,
       websiteUrl: dto.websiteUrl,
     });
 
-    await this.blogsRepository.save(blog);
+    try {
+      await this.blogsRepository.save(blog);
+    } catch (error: unknown) {
+      //страховка от гонки: два параллельных запроса могли пройти пре-чек
+      //уникальности, но уникальный индекс пропустит только одного
+      // this.throwIfDuplicateKeyError(error);
+      throw error;
+    }
 
-    return blog._id.toString();
+    return blog.id;
   }
 }
