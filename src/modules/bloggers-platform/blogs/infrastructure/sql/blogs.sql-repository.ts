@@ -35,7 +35,7 @@ export class BlogsSqlRepository {
           blog.name,
           blog.description,
           blog.websiteUrl,
-          blog.isMembership ?? true,
+          blog.isMembership ?? false,
         ],
       );
 
