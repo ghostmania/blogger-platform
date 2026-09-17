@@ -1,14 +1,14 @@
 import { CreateBlogDomainDto } from '../dto/create-blog.domain.dto';
 
 export type BlogRow = {
-  id:string;
+  id: string;
   name: string;
-  description:string;
+  description: string;
   website_url: string;
   is_membership: boolean;
   created_at: Date;
   updated_at: Date;
-}
+};
 
 export class BlogSqlEntity {
   id: string = '';
@@ -26,6 +26,12 @@ export class BlogSqlEntity {
     blog.description = dto.description;
     blog.websiteUrl = dto.websiteUrl;
     return blog;
+  }
+
+  update(dto: CreateBlogDomainDto): void {
+    this.name = dto.name;
+    this.description = dto.description;
+    this.websiteUrl = dto.websiteUrl;
   }
 
   //разворачивает плоскую строку БД во вложенную доменную структуру

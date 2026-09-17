@@ -14,19 +14,20 @@ import {
 // import { PostsController } from './posts/api/posts.controller';
 // import { CommentsController } from './comments/api/comments.controller';
 
-
 import { CreateBlogUseCase } from './blogs/application/usecases/create-blog.usecase';
 import { BlogsSqlRepository } from './blogs/infrastructure/sql/blogs.sql-repository';
 import { GetBlogByIdQueryHandler } from './blogs/application/queries/get-blog-by-id.query-handler';
 // import { BlogsQueryRepository } from './blogs/infrastructure/query/blogs.query-repository';
 import { BlogsSqlQueryRepository } from './blogs/infrastructure/sql/query/blogs.sql-query-repository';
 import { GetBlogsQueryHandler } from './blogs/application/queries/get-blogs.query-handler';
+import { UpdateBlogUseCase } from './blogs/application/usecases/update-blog.usecase';
+import { DeleteBlogUseCase } from './blogs/application/usecases/delete-blog.usecase';
 
 //command handlers (use cases) — пишущая половина CQRS
 const commandHandlers = [
   CreateBlogUseCase,
-  // UpdateBlogUseCase,
-  // DeleteBlogUseCase,
+  UpdateBlogUseCase,
+  DeleteBlogUseCase,
   // CreatePostUseCase,
   // CreatePostForBlogUseCase,
   // UpdatePostUseCase,
@@ -66,11 +67,11 @@ const repositories = [
   imports: [
     UserAccountsModule,
     // MongooseModule.forFeature([
-      // { name: Blog.name, schema: BlogSchema },
-      // { name: Post.name, schema: PostSchema },
-      // { name: PostLike.name, schema: PostLikeSchema },
-      // { name: Comment.name, schema: CommentSchema },
-      // { name: CommentLike.name, schema: CommentLikeSchema },
+    // { name: Blog.name, schema: BlogSchema },
+    // { name: Post.name, schema: PostSchema },
+    // { name: PostLike.name, schema: PostLikeSchema },
+    // { name: Comment.name, schema: CommentSchema },
+    // { name: CommentLike.name, schema: CommentLikeSchema },
     // ]),
   ],
   providers: [...repositories, ...commandHandlers, ...queryHandlers],

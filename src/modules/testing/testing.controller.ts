@@ -48,7 +48,7 @@ export class TestingController {
     //TRUNCATE одним оператором снимает вопрос порядка удаления при FK,
     //RESTART IDENTITY сбрасывает последовательность bigserial
     await this.pool.query(
-      'TRUNCATE TABLE device_sessions, users RESTART IDENTITY CASCADE',
+      'TRUNCATE TABLE device_sessions, users, blogs RESTART IDENTITY CASCADE',
     );
   }
 }

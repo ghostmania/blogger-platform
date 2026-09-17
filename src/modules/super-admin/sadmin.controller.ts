@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -28,6 +29,9 @@ import { CreateBlogCommand } from '../bloggers-platform/blogs/application/usecas
 import { GetBlogByIdQuery } from '../bloggers-platform/blogs/application/queries/get-blog-by-id.query-handler';
 import { GetBlogsQueryParams } from '../bloggers-platform/blogs/api/input-dto/get-blogs-query-params.input-dto';
 import { GetBlogsQuery } from '../bloggers-platform/blogs/application/queries/get-blogs.query-handler';
+import { UpdateBlogInputDto } from '../bloggers-platform/blogs/api/input-dto/update-blog.input-dto';
+import { UpdateBlogCommand } from '../bloggers-platform/blogs/application/usecases/update-blog.usecase';
+import { DeleteBlogCommand } from '../bloggers-platform/blogs/application/usecases/delete-blog.usecase';
 
 @Controller('sa')
 export class SadminController {
@@ -69,10 +73,9 @@ export class SadminController {
   // @HttpCode(HttpStatus.UNAUTHORIZED)
   @UseGuards(BasicAuthGuard)
   async createBlog(@Body() body: CreateBlogInputDto): Promise<BlogViewDto> {
-    const blogId = await this.commandBus.execute<
-    CreateBlogCommand,
-    string
-    >(new CreateBlogCommand(body));
+    const blogId = await this.commandBus.execute<CreateBlogCommand, string>(
+      new CreateBlogCommand(body),
+    );
     return this.queryBus.execute(new GetBlogByIdQuery(blogId));
   }
 
@@ -81,5 +84,24 @@ export class SadminController {
     @Query() query: GetBlogsQueryParams,
   ): Promise<PaginatedViewDto<BlogViewDto[]>> {
     return this.queryBus.execute(new GetBlogsQuery(query));
+  }
+
+  @ApiParam({ name: 'id' })
+  @Put('blogs/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(BasicAuthGuard)
+  async updateBlog(
+    @Param('id', IdValidationPipe) id: string,
+    @Body() body: UpdateBlogInputDto,
+  ): Promise<void> {
+    return this.commandBus.execute(new UpdateBlogCommand(id, body));
+  }
+
+  @ApiParam({ name: 'id' })
+  @Delete('blogs/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(BasicAuthGuard)
+  async deleteBlog(@Param('id', IdValidationPipe) id: string): Promise<void> {
+    return this.commandBus.execute(new DeleteBlogCommand(id));
   }
 }

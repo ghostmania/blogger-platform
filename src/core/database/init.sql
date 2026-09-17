@@ -44,3 +44,13 @@ CREATE TABLE IF NOT EXISTS device_sessions (
 
 CREATE INDEX IF NOT EXISTS device_sessions_user_id_idx
   ON device_sessions (user_id);
+
+CREATE TABLE IF NOT EXISTS blogs (
+  id            bigserial    PRIMARY KEY,
+  name          varchar(15)  NOT NULL,
+  description   varchar(500) NOT NULL,
+  website_url   varchar(100) NOT NULL,
+  is_membership boolean      NOT NULL DEFAULT false,
+  created_at    timestamptz  NOT NULL DEFAULT now(),
+  updated_at    timestamptz  NOT NULL DEFAULT now()
+);
