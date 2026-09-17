@@ -26,6 +26,8 @@ import { CreateBlogInputDto } from '../bloggers-platform/blogs/api/input-dto/cre
 import { BlogViewDto } from '../bloggers-platform/blogs/api/view-dto/blogs.view-dto';
 import { CreateBlogCommand } from '../bloggers-platform/blogs/application/usecases/create-blog.usecase';
 import { GetBlogByIdQuery } from '../bloggers-platform/blogs/application/queries/get-blog-by-id.query-handler';
+import { GetBlogsQueryParams } from '../bloggers-platform/blogs/api/input-dto/get-blogs-query-params.input-dto';
+import { GetBlogsQuery } from '../bloggers-platform/blogs/application/queries/get-blogs.query-handler';
 
 @Controller('sa')
 export class SadminController {
@@ -72,5 +74,12 @@ export class SadminController {
     string
     >(new CreateBlogCommand(body));
     return this.queryBus.execute(new GetBlogByIdQuery(blogId));
+  }
+
+  @Get('blogs')
+  async getAllBlogs(
+    @Query() query: GetBlogsQueryParams,
+  ): Promise<PaginatedViewDto<BlogViewDto[]>> {
+    return this.queryBus.execute(new GetBlogsQuery(query));
   }
 }

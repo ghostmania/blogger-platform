@@ -20,6 +20,7 @@ import { BlogsSqlRepository } from './blogs/infrastructure/sql/blogs.sql-reposit
 import { GetBlogByIdQueryHandler } from './blogs/application/queries/get-blog-by-id.query-handler';
 // import { BlogsQueryRepository } from './blogs/infrastructure/query/blogs.query-repository';
 import { BlogsSqlQueryRepository } from './blogs/infrastructure/sql/query/blogs.sql-query-repository';
+import { GetBlogsQueryHandler } from './blogs/application/queries/get-blogs.query-handler';
 
 //command handlers (use cases) — пишущая половина CQRS
 const commandHandlers = [
@@ -39,7 +40,7 @@ const commandHandlers = [
 
 //query handlers — читающая половина CQRS, работают только с query-репозиториями
 const queryHandlers = [
-  // GetBlogsQueryHandler,
+  GetBlogsQueryHandler,
   GetBlogByIdQueryHandler,
   // GetBlogPostsQueryHandler,
   // GetPostsQueryHandler,
