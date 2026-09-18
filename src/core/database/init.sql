@@ -54,3 +54,17 @@ CREATE TABLE IF NOT EXISTS blogs (
   created_at    timestamptz  NOT NULL DEFAULT now(),
   updated_at    timestamptz  NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS posts (
+  id                bigserial     PRIMARY KEY,
+  title             varchar(30)   NOT NULL,
+  short_description varchar(100)  NOT NULL,
+  content           varchar(1000) NOT NULL,
+  blog_id           bigint        NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
+  blog_name         varchar(15)   NOT NULL,
+  created_at        timestamptz   NOT NULL DEFAULT now(),
+  updated_at        timestamptz   NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS posts_blog_id_created_at_idx
+  ON posts (blog_id, created_at DESC);

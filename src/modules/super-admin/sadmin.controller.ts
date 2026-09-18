@@ -32,12 +32,20 @@ import { GetBlogsQuery } from '../bloggers-platform/blogs/application/queries/ge
 import { UpdateBlogInputDto } from '../bloggers-platform/blogs/api/input-dto/update-blog.input-dto';
 import { UpdateBlogCommand } from '../bloggers-platform/blogs/application/usecases/update-blog.usecase';
 import { DeleteBlogCommand } from '../bloggers-platform/blogs/application/usecases/delete-blog.usecase';
+import { CreatePostForBlogInputDto } from '../bloggers-platform/posts/api/input-dto/create-post-for-blog.input-dto';
+import { GetPostsQueryParams } from '../bloggers-platform/posts/api/input-dto/get-posts-query-params.input-dto';
+import { UpdatePostInputDto } from '../bloggers-platform/posts/api/input-dto/update-post.input-dto';
+import {
+  AdminBlogPostsService,
+  AdminPostView,
+} from './admin-blog-posts.service';
 
 @Controller('sa')
 export class SadminController {
   constructor(
     private queryBus: QueryBus,
     private commandBus: CommandBus,
+    private readonly adminBlogPostsService: AdminBlogPostsService,
   ) {}
 
   @Get('users')
@@ -56,7 +64,6 @@ export class SadminController {
   }
 
   @Post('users')
-  // @HttpCode(HttpStatus.UNAUTHORIZED)
   @UseGuards(BasicAuthGuard)
   async createUser(@Body() body: CreateUserInputDto): Promise<UserViewDto> {
     //созданный админом юзер сразу считается подтверждённым
@@ -70,7 +77,6 @@ export class SadminController {
 
   // create blog as admin
   @Post('blogs')
-  // @HttpCode(HttpStatus.UNAUTHORIZED)
   @UseGuards(BasicAuthGuard)
   async createBlog(@Body() body: CreateBlogInputDto): Promise<BlogViewDto> {
     const blogId = await this.commandBus.execute<CreateBlogCommand, string>(
@@ -80,6 +86,7 @@ export class SadminController {
   }
 
   @Get('blogs')
+  @UseGuards(BasicAuthGuard)
   async getAllBlogs(
     @Query() query: GetBlogsQueryParams,
   ): Promise<PaginatedViewDto<BlogViewDto[]>> {
@@ -103,5 +110,44 @@ export class SadminController {
   @UseGuards(BasicAuthGuard)
   async deleteBlog(@Param('id', IdValidationPipe) id: string): Promise<void> {
     return this.commandBus.execute(new DeleteBlogCommand(id));
+  }
+
+  @Post('blogs/:blogId/posts')
+  @UseGuards(BasicAuthGuard)
+  async createBlogPost(
+    @Param('blogId') blogId: string,
+    @Body() body: CreatePostForBlogInputDto,
+  ): Promise<AdminPostView> {
+    return this.adminBlogPostsService.create(blogId, body);
+  }
+
+  @Get('blogs/:blogId/posts')
+  @UseGuards(BasicAuthGuard)
+  async getBlogPosts(
+    @Param('blogId') blogId: string,
+    @Query() query: GetPostsQueryParams,
+  ): Promise<PaginatedViewDto<AdminPostView[]>> {
+    return this.adminBlogPostsService.getAll(blogId, query);
+  }
+
+  @Put('blogs/:blogId/posts/:postId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(BasicAuthGuard)
+  async updateBlogPost(
+    @Param('blogId') blogId: string,
+    @Param('postId') postId: string,
+    @Body() body: UpdatePostInputDto,
+  ): Promise<void> {
+    return this.adminBlogPostsService.update(blogId, postId, body);
+  }
+
+  @Delete('blogs/:blogId/posts/:postId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(BasicAuthGuard)
+  async deleteBlogPost(
+    @Param('blogId') blogId: string,
+    @Param('postId') postId: string,
+  ): Promise<void> {
+    return this.adminBlogPostsService.delete(blogId, postId);
   }
 }

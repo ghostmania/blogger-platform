@@ -10,7 +10,7 @@ import {
   CommentLikeSchema,
 } from './comments/domain/comment-like.entity';
 
-// import { BlogsController } from './blogs/api/blogs.controller';
+import { BlogsController } from './blogs/api/blogs.controller';
 // import { PostsController } from './posts/api/posts.controller';
 // import { CommentsController } from './comments/api/comments.controller';
 
@@ -75,9 +75,6 @@ const repositories = [
     // ]),
   ],
   providers: [...repositories, ...commandHandlers, ...queryHandlers],
-  controllers: [
-    // BlogsController
-    // , PostsController, CommentsController
-  ],
+  controllers: [BlogsController],
 })
 export class BloggersPlatformModule {}
