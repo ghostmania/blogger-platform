@@ -17,10 +17,8 @@ import { PaginatedViewDto } from '../../../../core/dto/base.paginated.view-dto';
 import { BasicAuthGuard } from '../../../user-accounts/guards/basic/basic-auth.guard';
 import { JwtOptionalAuthGuard } from '../../../user-accounts/guards/bearer/jwt-optional-auth.guard';
 import { GetBlogByIdQuery } from '../application/queries/get-blog-by-id.query-handler';
-import {
-  BlogPostViewDto,
-  GetBlogPostsQuery,
-} from '../application/queries/get-blog-posts.query-handler';
+import { GetBlogPostsQuery } from '../application/queries/get-blog-posts.query-handler';
+import { PostViewDto } from '../../posts/api/view-dto/posts.view-dto';
 import { GetBlogsQuery } from '../application/queries/get-blogs.query-handler';
 import { CreateBlogCommand } from '../application/usecases/create-blog.usecase';
 import { DeleteBlogCommand } from '../application/usecases/delete-blog.usecase';
@@ -49,7 +47,7 @@ export class BlogsController {
   async getBlogPosts(
     @Param('blogId') blogId: string,
     @Query() query: GetPostsQueryParams,
-  ): Promise<PaginatedViewDto<BlogPostViewDto[]>> {
+  ): Promise<PaginatedViewDto<PostViewDto[]>> {
     return this.queryBus.execute(new GetBlogPostsQuery(blogId, query));
   }
 

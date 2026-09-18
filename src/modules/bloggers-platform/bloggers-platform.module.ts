@@ -23,6 +23,9 @@ import { GetBlogsQueryHandler } from './blogs/application/queries/get-blogs.quer
 import { UpdateBlogUseCase } from './blogs/application/usecases/update-blog.usecase';
 import { DeleteBlogUseCase } from './blogs/application/usecases/delete-blog.usecase';
 import { GetBlogPostsQueryHandler } from './blogs/application/queries/get-blog-posts.query-handler';
+import { GetPostsQueryHandler } from './posts/application/queries/get-posts.query-handler';
+import { PostsSqlQueryRepository } from './posts/infrastructure/sql/query/posts.sql-query-repository';
+import { PostsController } from './posts/api/posts.controller';
 
 //command handlers (use cases) — пишущая половина CQRS
 const commandHandlers = [
@@ -45,7 +48,7 @@ const queryHandlers = [
   GetBlogsQueryHandler,
   GetBlogByIdQueryHandler,
   GetBlogPostsQueryHandler,
-  // GetPostsQueryHandler,
+  GetPostsQueryHandler,
   // GetPostByIdQueryHandler,
   // GetCommentByIdQueryHandler,
   // GetPostCommentsQueryHandler,
@@ -54,6 +57,7 @@ const queryHandlers = [
 const repositories = [
   BlogsSqlRepository,
   BlogsSqlQueryRepository,
+  PostsSqlQueryRepository,
   // PostsRepository,
   // PostLikesRepository,
   // PostsQueryRepository,
@@ -76,6 +80,6 @@ const repositories = [
     // ]),
   ],
   providers: [...repositories, ...commandHandlers, ...queryHandlers],
-  controllers: [BlogsController],
+  controllers: [BlogsController, PostsController],
 })
 export class BloggersPlatformModule {}
