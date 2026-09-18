@@ -32,6 +32,10 @@ import { GetBlogsQuery } from '../bloggers-platform/blogs/application/queries/ge
 import { UpdateBlogInputDto } from '../bloggers-platform/blogs/api/input-dto/update-blog.input-dto';
 import { UpdateBlogCommand } from '../bloggers-platform/blogs/application/usecases/update-blog.usecase';
 import { DeleteBlogCommand } from '../bloggers-platform/blogs/application/usecases/delete-blog.usecase';
+import {
+  BlogPostViewDto,
+  GetBlogPostsQuery,
+} from '../bloggers-platform/blogs/application/queries/get-blog-posts.query-handler';
 import { CreatePostForBlogInputDto } from '../bloggers-platform/posts/api/input-dto/create-post-for-blog.input-dto';
 import { GetPostsQueryParams } from '../bloggers-platform/posts/api/input-dto/get-posts-query-params.input-dto';
 import { UpdatePostInputDto } from '../bloggers-platform/posts/api/input-dto/update-post.input-dto';
@@ -127,7 +131,7 @@ export class SadminController {
     @Param('blogId') blogId: string,
     @Query() query: GetPostsQueryParams,
   ): Promise<PaginatedViewDto<AdminPostView[]>> {
-    return this.adminBlogPostsService.getAll(blogId, query);
+    return this.queryBus.execute(new GetBlogPostsQuery(blogId, query));
   }
 
   @Put('blogs/:blogId/posts/:postId')

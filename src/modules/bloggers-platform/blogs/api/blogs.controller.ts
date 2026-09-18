@@ -12,16 +12,22 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiBasicAuth, ApiParam } from '@nestjs/swagger';
+import { ApiBasicAuth, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { PaginatedViewDto } from '../../../../core/dto/base.paginated.view-dto';
 import { BasicAuthGuard } from '../../../user-accounts/guards/basic/basic-auth.guard';
+import { JwtOptionalAuthGuard } from '../../../user-accounts/guards/bearer/jwt-optional-auth.guard';
 import { GetBlogByIdQuery } from '../application/queries/get-blog-by-id.query-handler';
+import {
+  BlogPostViewDto,
+  GetBlogPostsQuery,
+} from '../application/queries/get-blog-posts.query-handler';
 import { GetBlogsQuery } from '../application/queries/get-blogs.query-handler';
 import { CreateBlogCommand } from '../application/usecases/create-blog.usecase';
 import { DeleteBlogCommand } from '../application/usecases/delete-blog.usecase';
 import { UpdateBlogCommand } from '../application/usecases/update-blog.usecase';
 import { CreateBlogInputDto } from './input-dto/create-blog.input-dto';
 import { GetBlogsQueryParams } from './input-dto/get-blogs-query-params.input-dto';
+import { GetPostsQueryParams } from '../../posts/api/input-dto/get-posts-query-params.input-dto';
 import { UpdateBlogInputDto } from './input-dto/update-blog.input-dto';
 import { BlogViewDto } from './view-dto/blogs.view-dto';
 
@@ -37,6 +43,14 @@ export class BlogsController {
     @Query() query: GetBlogsQueryParams,
   ): Promise<PaginatedViewDto<BlogViewDto[]>> {
     return this.queryBus.execute(new GetBlogsQuery(query));
+  }
+
+  @Get(':blogId/posts')
+  async getBlogPosts(
+    @Param('blogId') blogId: string,
+    @Query() query: GetPostsQueryParams,
+  ): Promise<PaginatedViewDto<BlogPostViewDto[]>> {
+    return this.queryBus.execute(new GetBlogPostsQuery(blogId, query));
   }
 
   @ApiParam({ name: 'id' })

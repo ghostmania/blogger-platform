@@ -22,6 +22,7 @@ import { BlogsSqlQueryRepository } from './blogs/infrastructure/sql/query/blogs.
 import { GetBlogsQueryHandler } from './blogs/application/queries/get-blogs.query-handler';
 import { UpdateBlogUseCase } from './blogs/application/usecases/update-blog.usecase';
 import { DeleteBlogUseCase } from './blogs/application/usecases/delete-blog.usecase';
+import { GetBlogPostsQueryHandler } from './blogs/application/queries/get-blog-posts.query-handler';
 
 //command handlers (use cases) — пишущая половина CQRS
 const commandHandlers = [
@@ -43,7 +44,7 @@ const commandHandlers = [
 const queryHandlers = [
   GetBlogsQueryHandler,
   GetBlogByIdQueryHandler,
-  // GetBlogPostsQueryHandler,
+  GetBlogPostsQueryHandler,
   // GetPostsQueryHandler,
   // GetPostByIdQueryHandler,
   // GetCommentByIdQueryHandler,
