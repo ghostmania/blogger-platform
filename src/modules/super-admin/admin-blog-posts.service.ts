@@ -4,7 +4,7 @@ import { PG_POOL } from '../../core/database/database.constants';
 import { DomainException } from '../../core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from '../../core/exceptions/domain-exception-codes';
 import { CreatePostForBlogInputDto } from '../bloggers-platform/posts/api/input-dto/create-post-for-blog.input-dto';
-import { UpdatePostInputDto } from '../bloggers-platform/posts/api/input-dto/update-post.input-dto';
+import { UpdatePostForBlogInputDto } from '../bloggers-platform/posts/api/input-dto/update-post-for-blog.input-dto';
 
 type Row = {
   id: string;
@@ -52,7 +52,7 @@ export class AdminBlogPostsService {
   async update(
     blogId: string,
     postId: string,
-    dto: UpdatePostInputDto,
+    dto: UpdatePostForBlogInputDto,
   ): Promise<void> {
     await this.blog(blogId);
     if (!this.numeric(postId)) this.notFound('Post not found');

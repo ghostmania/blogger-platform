@@ -26,6 +26,7 @@ import { GetBlogPostsQueryHandler } from './blogs/application/queries/get-blog-p
 import { GetPostsQueryHandler } from './posts/application/queries/get-posts.query-handler';
 import { PostsSqlQueryRepository } from './posts/infrastructure/sql/query/posts.sql-query-repository';
 import { PostsController } from './posts/api/posts.controller';
+import { GetPostByIdQueryHandler } from './posts/application/queries/get-post-by-id.query-handler';
 
 //command handlers (use cases) — пишущая половина CQRS
 const commandHandlers = [
@@ -49,7 +50,7 @@ const queryHandlers = [
   GetBlogByIdQueryHandler,
   GetBlogPostsQueryHandler,
   GetPostsQueryHandler,
-  // GetPostByIdQueryHandler,
+  GetPostByIdQueryHandler,
   // GetCommentByIdQueryHandler,
   // GetPostCommentsQueryHandler,
 ];

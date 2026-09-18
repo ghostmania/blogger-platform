@@ -35,7 +35,7 @@ import { DeleteBlogCommand } from '../bloggers-platform/blogs/application/usecas
 import { GetBlogPostsQuery } from '../bloggers-platform/blogs/application/queries/get-blog-posts.query-handler';
 import { CreatePostForBlogInputDto } from '../bloggers-platform/posts/api/input-dto/create-post-for-blog.input-dto';
 import { GetPostsQueryParams } from '../bloggers-platform/posts/api/input-dto/get-posts-query-params.input-dto';
-import { UpdatePostInputDto } from '../bloggers-platform/posts/api/input-dto/update-post.input-dto';
+import { UpdatePostForBlogInputDto } from '../bloggers-platform/posts/api/input-dto/update-post-for-blog.input-dto';
 import {
   AdminBlogPostsService,
   AdminPostView,
@@ -137,7 +137,7 @@ export class SadminController {
   async updateBlogPost(
     @Param('blogId') blogId: string,
     @Param('postId') postId: string,
-    @Body() body: UpdatePostInputDto,
+    @Body() body: UpdatePostForBlogInputDto,
   ): Promise<void> {
     return this.adminBlogPostsService.update(blogId, postId, body);
   }
