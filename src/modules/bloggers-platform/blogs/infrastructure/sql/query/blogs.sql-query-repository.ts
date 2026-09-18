@@ -39,7 +39,7 @@ export class BlogsSqlQueryRepository {
        FROM blogs
        WHERE $1::text IS NULL
           OR name ILIKE '%' || $1 || '%'
-       ORDER BY ${sortExpression} ${sortDirection}, id DESC
+       ORDER BY ${sortExpression} ${sortDirection}, id ${sortDirection}
        LIMIT $2 OFFSET $3`,
       [query.searchNameTerm, query.pageSize, query.calculateSkip()],
     );
