@@ -68,3 +68,16 @@ CREATE TABLE IF NOT EXISTS posts (
 
 CREATE INDEX IF NOT EXISTS posts_blog_id_created_at_idx
   ON posts (blog_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS comments (
+  id          bigserial    PRIMARY KEY,
+  content     varchar(300) NOT NULL,
+  post_id     bigint       NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  user_id     bigint       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_login  varchar(10)  NOT NULL,
+  created_at  timestamptz  NOT NULL DEFAULT now(),
+  updated_at  timestamptz  NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS comments_post_id_created_at_idx
+  ON comments (post_id, created_at DESC);

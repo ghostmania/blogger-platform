@@ -60,7 +60,9 @@ export class PostsSqlQueryRepository {
     id: string,
     _userId: string | null = null,
   ): Promise<PostViewDto> {
-    if (!/^\d+$/.test(id)) this.notFound();
+    if (!/^\d+$/.test(id) || BigInt(id) > 9223372036854775807n) {
+      this.notFound();
+    }
     const { rows } = await this.pool.query<PostRow>(
       `SELECT id, title, short_description, content, blog_id, blog_name, created_at
        FROM posts WHERE id = $1`,

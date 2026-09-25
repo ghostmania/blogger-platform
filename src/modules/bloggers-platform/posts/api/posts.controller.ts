@@ -1,16 +1,28 @@
 import { GetPostsQueryParams } from './input-dto/get-posts-query-params.input-dto';
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { JwtOptionalAuthGuard } from '../../../user-accounts/guards/bearer/jwt-optional-auth.guard';
-import {
-  ExtractUserIfExistsFromRequest
-} from '../../../user-accounts/guards/decorators/param/extract-user-if-exists-from-request.decorator';
+import { ExtractUserIfExistsFromRequest } from '../../../user-accounts/guards/decorators/param/extract-user-if-exists-from-request.decorator';
 import { UserContextDto } from '../../../user-accounts/guards/dto/user-context.dto';
 import { PaginatedViewDto } from '../../../../core/dto/base.paginated.view-dto';
 import { PostViewDto } from './view-dto/posts.view-dto';
 import { GetPostsQuery } from '../application/queries/get-posts.query-handler';
 import { GetPostByIdQuery } from '../application/queries/get-post-by-id.query-handler';
+import { CreateCommentInputDto } from '../../comments/api/input-dto/create-comment.input-dto';
+import { CommentViewDto } from '../../comments/api/view-dto/comments.view-dto';
+import { JwtAuthGuard } from '../../../user-accounts/guards/bearer/jwt-auth.guard';
+import { CreateCommentCommand } from '../../comments/application/usecases/create-comment.usecase';
+import { GetCommentByIdQuery } from '../../comments/application/queries/get-comment-by-id.query-handler';
+import { ExtractUserFromRequest } from '../../../user-accounts/guards/decorators/param/extract-user-from-request.decorator';
 
 @Controller('posts')
 export class PostsController {
@@ -68,22 +80,22 @@ export class PostsController {
   //   );
   // }
   //
-  // @ApiBearerAuth()
-  // @UseGuards(JwtAuthGuard)
-  // @Post(':postId/comments')
-  // async createComment(
-  //   @Param('postId') postId: string,
-  //   @Body() body: CreateCommentInputDto,
-  //   @ExtractUserFromRequest() user: UserContextDto,
-  // ): Promise<CommentViewDto> {
-  //   const commentId = await this.commandBus.execute<
-  //     CreateCommentCommand,
-  //     string
-  //   >(new CreateCommentCommand(postId, user.id, body));
-  //
-  //   return this.queryBus.execute(new GetCommentByIdQuery(commentId, user.id));
-  // }
-  //
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post(':postId/comments')
+  async createComment(
+    @Param('postId') postId: string,
+    @Body() body: CreateCommentInputDto,
+    @ExtractUserFromRequest() user: UserContextDto,
+  ): Promise<CommentViewDto> {
+    const commentId = await this.commandBus.execute<
+      CreateCommentCommand,
+      string
+    >(new CreateCommentCommand(postId, user.id, body));
+
+    return this.queryBus.execute(new GetCommentByIdQuery(commentId, user.id));
+  }
+
   // @ApiBasicAuth('basicAuth')
   // @UseGuards(BasicAuthGuard)
   // @Post()

@@ -1,8 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectModel } from '@nestjs/mongoose';
-import { Comment, CommentModelType } from '../../domain/comment.entity';
-import { CommentsRepository } from '../../infrastructure/comments.repository';
-import { PostsRepository } from '../../../posts/infrastructure/posts.repository';
+import { CommentsSqlRepository } from '../../sql/comments.sql-repository';
+import { PostsSqlQueryRepository } from '../../../posts/infrastructure/sql/query/posts.sql-query-repository';
 import { CreateCommentInputDto } from '../../api/input-dto/create-comment.input-dto';
 import { UsersExternalQueryRepository } from '../../../../user-accounts/infrastructure/external-query/users.external-query-repository';
 
@@ -20,10 +18,8 @@ export class CreateCommentUseCase implements ICommandHandler<
   string
 > {
   constructor(
-    @InjectModel(Comment.name)
-    private CommentModel: CommentModelType,
-    private commentsRepository: CommentsRepository,
-    private postsRepository: PostsRepository,
+    private commentsRepository: CommentsSqlRepository,
+    private postsRepository: PostsSqlQueryRepository,
     private usersExternalQueryRepository: UsersExternalQueryRepository,
   ) {}
 
@@ -33,21 +29,17 @@ export class CreateCommentUseCase implements ICommandHandler<
     dto,
   }: CreateCommentCommand): Promise<string> {
     //404, если поста нет
-    const post = await this.postsRepository.findOrNotFoundFail(postId);
+    const post = await this.postsRepository.getByIdOrNotFoundFail(postId);
 
     //login денормализуем в комментарий, чтобы не джойнить users на чтении
     const user =
       await this.usersExternalQueryRepository.getByIdOrNotFoundFail(userId);
 
-    const comment = this.CommentModel.createInstance({
+    return this.commentsRepository.create({
       content: dto.content,
-      postId: post._id.toString(),
+      postId: post.id,
       userId: user.id,
       userLogin: user.login,
     });
-
-    await this.commentsRepository.save(comment);
-
-    return comment._id.toString();
   }
 }

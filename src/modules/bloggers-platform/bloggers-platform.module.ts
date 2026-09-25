@@ -27,6 +27,10 @@ import { GetPostsQueryHandler } from './posts/application/queries/get-posts.quer
 import { PostsSqlQueryRepository } from './posts/infrastructure/sql/query/posts.sql-query-repository';
 import { PostsController } from './posts/api/posts.controller';
 import { GetPostByIdQueryHandler } from './posts/application/queries/get-post-by-id.query-handler';
+import { CreateCommentUseCase } from './comments/application/usecases/create-comment.usecase';
+import { GetCommentByIdQueryHandler } from './comments/application/queries/get-comment-by-id.query-handler';
+import { CommentsSqlRepository } from './comments/sql/comments.sql-repository';
+import { CommentsSqlQueryRepository } from './comments/sql/query/comments.sql-query-repository';
 
 //command handlers (use cases) — пишущая половина CQRS
 const commandHandlers = [
@@ -38,7 +42,7 @@ const commandHandlers = [
   // UpdatePostUseCase,
   // DeletePostUseCase,
   // UpdatePostLikeStatusUseCase,
-  // CreateCommentUseCase,
+  CreateCommentUseCase,
   // UpdateCommentUseCase,
   // DeleteCommentUseCase,
   // UpdateCommentLikeStatusUseCase,
@@ -51,7 +55,7 @@ const queryHandlers = [
   GetBlogPostsQueryHandler,
   GetPostsQueryHandler,
   GetPostByIdQueryHandler,
-  // GetCommentByIdQueryHandler,
+  GetCommentByIdQueryHandler,
   // GetPostCommentsQueryHandler,
 ];
 
@@ -59,6 +63,8 @@ const repositories = [
   BlogsSqlRepository,
   BlogsSqlQueryRepository,
   PostsSqlQueryRepository,
+  CommentsSqlRepository,
+  CommentsSqlQueryRepository,
   // PostsRepository,
   // PostLikesRepository,
   // PostsQueryRepository,
