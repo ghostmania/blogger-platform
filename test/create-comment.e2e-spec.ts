@@ -68,6 +68,9 @@ describe('Create comment HTTP flow', () => {
               user_id: '7',
               user_login: 'author',
               created_at: createdAt,
+              likes_count: '0',
+              dislikes_count: '0',
+              my_status: 'None',
             },
           ],
         };

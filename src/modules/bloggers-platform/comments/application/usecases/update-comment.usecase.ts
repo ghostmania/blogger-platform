@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { CommentsRepository } from '../../infrastructure/comments.repository';
+import { CommentsSqlRepository } from '../../sql/comments.sql-repository';
 import { UpdateCommentInputDto } from '../../api/input-dto/update-comment.input-dto';
 import { DomainException } from '../../../../../core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from '../../../../../core/exceptions/domain-exception-codes';
@@ -17,7 +17,7 @@ export class UpdateCommentUseCase implements ICommandHandler<
   UpdateCommentCommand,
   void
 > {
-  constructor(private commentsRepository: CommentsRepository) {}
+  constructor(private commentsRepository: CommentsSqlRepository) {}
 
   async execute({
     commentId,
@@ -27,15 +27,13 @@ export class UpdateCommentUseCase implements ICommandHandler<
     const comment = await this.commentsRepository.findOrNotFoundFail(commentId);
 
     //чужой комментарий редактировать нельзя -> 403
-    if (!comment.isOwnedBy(userId)) {
+    if (comment.user_id !== userId) {
       throw new DomainException({
         code: DomainExceptionCode.Forbidden,
         message: 'comment belongs to another user',
       });
     }
 
-    comment.update(dto);
-
-    await this.commentsRepository.save(comment);
+    await this.commentsRepository.updateContent(commentId, userId, dto.content);
   }
 }

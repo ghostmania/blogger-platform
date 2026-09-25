@@ -1,3 +1,5 @@
+import { ExtractUserIfExistsFromRequest } from '../../../user-accounts/guards/decorators/param/extract-user-if-exists-from-request.decorator';
+import { UserContextDto } from '../../../user-accounts/guards/dto/user-context.dto';
 import {
   Body,
   Controller,
@@ -43,12 +45,17 @@ export class BlogsController {
     return this.queryBus.execute(new GetBlogsQuery(query));
   }
 
+  @ApiBearerAuth()
+  @UseGuards(JwtOptionalAuthGuard)
   @Get(':blogId/posts')
   async getBlogPosts(
     @Param('blogId') blogId: string,
     @Query() query: GetPostsQueryParams,
+    @ExtractUserIfExistsFromRequest() user: UserContextDto | null,
   ): Promise<PaginatedViewDto<PostViewDto[]>> {
-    return this.queryBus.execute(new GetBlogPostsQuery(blogId, query));
+    return this.queryBus.execute(
+      new GetBlogPostsQuery(blogId, query, user?.id ?? null),
+    );
   }
 
   @ApiParam({ name: 'id' })

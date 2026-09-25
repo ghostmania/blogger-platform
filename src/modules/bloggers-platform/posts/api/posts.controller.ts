@@ -3,11 +3,18 @@ import {
   Body,
   Controller,
   Get,
+  Put,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { UpdatePostLikeStatusCommand } from '../application/usecases/update-post-like-status.usecase';
+import { LikeStatusInputDto } from '../../dto/like-status.input-dto';
+import { GetCommentsQueryParams } from '../../comments/api/input-dto/get-comments-query-params.input-dto';
+import { GetPostCommentsQuery } from '../../comments/application/queries/get-post-comments.query-handler';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { JwtOptionalAuthGuard } from '../../../user-accounts/guards/bearer/jwt-optional-auth.guard';
@@ -32,8 +39,8 @@ export class PostsController {
   ) {}
 
   //чтение публичное, но токен (если он есть) нужен для myStatus
-  // @ApiBearerAuth()
-  // @UseGuards(JwtOptionalAuthGuard)
+  @ApiBearerAuth()
+  @UseGuards(JwtOptionalAuthGuard)
   @Get()
   async getAll(
     @Query() query: GetPostsQueryParams,
@@ -42,8 +49,8 @@ export class PostsController {
     return this.queryBus.execute(new GetPostsQuery(query, user?.id ?? null));
   }
 
-  // @ApiBearerAuth()
-  // @UseGuards(JwtOptionalAuthGuard)
+  @ApiBearerAuth()
+  @UseGuards(JwtOptionalAuthGuard)
   @ApiParam({ name: 'id' })
   @Get(':id')
   async getById(
@@ -53,33 +60,33 @@ export class PostsController {
     return this.queryBus.execute(new GetPostByIdQuery(id, user?.id ?? null));
   }
 
-  // @ApiBearerAuth()
-  // @UseGuards(JwtAuthGuard)
-  // @Put(':postId/like-status')
-  // @HttpCode(HttpStatus.NO_CONTENT)
-  // async updateLikeStatus(
-  //   @Param('postId') postId: string,
-  //   @Body() body: LikeStatusInputDto,
-  //   @ExtractUserFromRequest() user: UserContextDto,
-  // ): Promise<void> {
-  //   return this.commandBus.execute(
-  //     new UpdatePostLikeStatusCommand(postId, user.id, body.likeStatus),
-  //   );
-  // }
-  //
-  // @ApiBearerAuth()
-  // @UseGuards(JwtOptionalAuthGuard)
-  // @Get(':postId/comments')
-  // async getComments(
-  //   @Param('postId') postId: string,
-  //   @Query() query: GetCommentsQueryParams,
-  //   @ExtractUserIfExistsFromRequest() user: UserContextDto | null,
-  // ): Promise<PaginatedViewDto<CommentViewDto[]>> {
-  //   return this.queryBus.execute(
-  //     new GetPostCommentsQuery(postId, query, user?.id ?? null),
-  //   );
-  // }
-  //
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Put(':postId/like-status')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async updateLikeStatus(
+    @Param('postId') postId: string,
+    @Body() body: LikeStatusInputDto,
+    @ExtractUserFromRequest() user: UserContextDto,
+  ): Promise<void> {
+    return this.commandBus.execute(
+      new UpdatePostLikeStatusCommand(postId, user.id, body.likeStatus),
+    );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtOptionalAuthGuard)
+  @Get(':postId/comments')
+  async getComments(
+    @Param('postId') postId: string,
+    @Query() query: GetCommentsQueryParams,
+    @ExtractUserIfExistsFromRequest() user: UserContextDto | null,
+  ): Promise<PaginatedViewDto<CommentViewDto[]>> {
+    return this.queryBus.execute(
+      new GetPostCommentsQuery(postId, query, user?.id ?? null),
+    );
+  }
+
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post(':postId/comments')

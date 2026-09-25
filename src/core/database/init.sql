@@ -81,3 +81,25 @@ CREATE TABLE IF NOT EXISTS comments (
 
 CREATE INDEX IF NOT EXISTS comments_post_id_created_at_idx
   ON comments (post_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS post_likes (
+  post_id bigint NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  user_id bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status varchar(7) NOT NULL CHECK (status IN ('None', 'Like', 'Dislike')),
+  added_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  PRIMARY KEY (post_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS post_likes_status_added_at_idx
+  ON post_likes (post_id, status, added_at DESC, user_id DESC);
+
+CREATE TABLE IF NOT EXISTS comment_likes (
+  comment_id bigint NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
+  user_id bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status varchar(7) NOT NULL CHECK (status IN ('None', 'Like', 'Dislike')),
+  added_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  PRIMARY KEY (comment_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS comment_likes_status_added_at_idx
+  ON comment_likes (comment_id, status, added_at DESC, user_id DESC);

@@ -1,3 +1,9 @@
+import { LikesSqlRepository } from './likes/likes.sql-repository';
+import { GetPostCommentsQueryHandler } from './comments/application/queries/get-post-comments.query-handler';
+import { UpdatePostLikeStatusUseCase } from './posts/application/usecases/update-post-like-status.usecase';
+import { UpdateCommentLikeStatusUseCase } from './comments/application/usecases/update-comment-like-status.usecase';
+import { DeleteCommentUseCase } from './comments/application/usecases/delete-comment.usecase';
+import { UpdateCommentUseCase } from './comments/application/usecases/update-comment.usecase';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserAccountsModule } from '../user-accounts/user-accounts.module';
@@ -12,7 +18,7 @@ import {
 
 import { BlogsController } from './blogs/api/blogs.controller';
 // import { PostsController } from './posts/api/posts.controller';
-// import { CommentsController } from './comments/api/comments.controller';
+import { CommentsController } from './comments/api/comments.controller';
 
 import { CreateBlogUseCase } from './blogs/application/usecases/create-blog.usecase';
 import { BlogsSqlRepository } from './blogs/infrastructure/sql/blogs.sql-repository';
@@ -41,11 +47,11 @@ const commandHandlers = [
   // CreatePostForBlogUseCase,
   // UpdatePostUseCase,
   // DeletePostUseCase,
-  // UpdatePostLikeStatusUseCase,
+  UpdatePostLikeStatusUseCase,
   CreateCommentUseCase,
-  // UpdateCommentUseCase,
-  // DeleteCommentUseCase,
-  // UpdateCommentLikeStatusUseCase,
+  UpdateCommentUseCase,
+  DeleteCommentUseCase,
+  UpdateCommentLikeStatusUseCase,
 ];
 
 //query handlers — читающая половина CQRS, работают только с query-репозиториями
@@ -56,7 +62,7 @@ const queryHandlers = [
   GetPostsQueryHandler,
   GetPostByIdQueryHandler,
   GetCommentByIdQueryHandler,
-  // GetPostCommentsQueryHandler,
+  GetPostCommentsQueryHandler,
 ];
 
 const repositories = [
@@ -64,6 +70,7 @@ const repositories = [
   BlogsSqlQueryRepository,
   PostsSqlQueryRepository,
   CommentsSqlRepository,
+  LikesSqlRepository,
   CommentsSqlQueryRepository,
   // PostsRepository,
   // PostLikesRepository,
@@ -87,6 +94,6 @@ const repositories = [
     // ]),
   ],
   providers: [...repositories, ...commandHandlers, ...queryHandlers],
-  controllers: [BlogsController, PostsController],
+  controllers: [BlogsController, PostsController, CommentsController],
 })
 export class BloggersPlatformModule {}

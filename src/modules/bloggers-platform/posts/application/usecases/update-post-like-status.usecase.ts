@@ -1,8 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectModel } from '@nestjs/mongoose';
-import { PostLike, PostLikeModelType } from '../../domain/post-like.entity';
-import { PostsRepository } from '../../infrastructure/posts.repository';
-import { PostLikesRepository } from '../../infrastructure/post-likes.repository';
+import { PostsSqlQueryRepository } from '../../infrastructure/sql/query/posts.sql-query-repository';
+import { LikesSqlRepository } from '../../../likes/likes.sql-repository';
 import { LikeStatus } from '../../../enums/like-status.enum';
 import { UsersExternalQueryRepository } from '../../../../user-accounts/infrastructure/external-query/users.external-query-repository';
 
@@ -20,11 +18,9 @@ export class UpdatePostLikeStatusUseCase implements ICommandHandler<
   void
 > {
   constructor(
-    @InjectModel(PostLike.name)
-    private PostLikeModel: PostLikeModelType,
-    private postsRepository: PostsRepository,
-    private postLikesRepository: PostLikesRepository,
-    private usersExternalQueryRepository: UsersExternalQueryRepository,
+    private readonly targets: PostsSqlQueryRepository,
+    private readonly likes: LikesSqlRepository,
+    private readonly users: UsersExternalQueryRepository,
   ) {}
 
   async execute({
@@ -32,39 +28,8 @@ export class UpdatePostLikeStatusUseCase implements ICommandHandler<
     userId,
     likeStatus,
   }: UpdatePostLikeStatusCommand): Promise<void> {
-    const post = await this.postsRepository.findOrNotFoundFail(postId);
-
-    const existingLike = await this.postLikesRepository.findByPostAndUser(
-      postId,
-      userId,
-    );
-
-    const oldStatus = existingLike?.status ?? LikeStatus.None;
-
-    if (oldStatus === likeStatus) {
-      return;
-    }
-
-    if (existingLike) {
-      existingLike.updateStatus(likeStatus);
-      await this.postLikesRepository.save(existingLike);
-    } else {
-      //login денормализуем в документ лайка, чтобы собирать newestLikes без джойна
-      const user =
-        await this.usersExternalQueryRepository.getByIdOrNotFoundFail(userId);
-
-      const like = this.PostLikeModel.createInstance({
-        postId,
-        userId,
-        login: user.login,
-        status: likeStatus,
-      });
-
-      await this.postLikesRepository.save(like);
-    }
-
-    post.applyLikeStatusChange(oldStatus, likeStatus);
-
-    await this.postsRepository.save(post);
+    await this.targets.getByIdOrNotFoundFail(postId);
+    await this.users.getByIdOrNotFoundFail(userId);
+    await this.likes.setStatus('post', postId, userId, likeStatus);
   }
 }
