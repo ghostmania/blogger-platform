@@ -108,7 +108,7 @@ export class AdminBlogPostsService {
   }
 
   private numeric(id: string): boolean {
-    return /^\d+$/.test(id);
+    return /^\d+$/.test(id) && BigInt(id) <= 9223372036854775807n;
   }
 
   private notFound(message: string): never {

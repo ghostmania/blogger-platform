@@ -71,7 +71,7 @@ export class BlogsSqlRepository {
   }
 
   async deleteById(id: string): Promise<void> {
-    if (!NUMERIC_ID.test(id)) {
+    if (!NUMERIC_ID.test(id) || BigInt(id) > 9223372036854775807n) {
       throw new DomainException({
         code: DomainExceptionCode.NotFound,
         message: 'Blog not found',
@@ -92,7 +92,7 @@ export class BlogsSqlRepository {
   }
 
   async findOrNotFoundFail(id: string): Promise<BlogSqlEntity> {
-    if (!NUMERIC_ID.test(id)) {
+    if (!NUMERIC_ID.test(id) || BigInt(id) > 9223372036854775807n) {
       throw new DomainException({
         code: DomainExceptionCode.NotFound,
         message: 'Blog not found',

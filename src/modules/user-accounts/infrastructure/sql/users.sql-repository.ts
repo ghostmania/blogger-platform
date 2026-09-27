@@ -133,7 +133,7 @@ export class UsersSqlRepository extends UsersRepository {
   findById(id: string): Promise<UserSqlEntity | null> {
     //«id неверного формата» — это тот же «такого юзера нет», то есть null:
     //дальше findOrNotFoundFail превратит его в честный 404, а не в 500
-    if (!NUMERIC_ID.test(id)) {
+    if (!NUMERIC_ID.test(id) || BigInt(id) > 9223372036854775807n) {
       return Promise.resolve(null);
     }
 

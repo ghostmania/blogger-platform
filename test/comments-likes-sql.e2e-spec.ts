@@ -1,7 +1,9 @@
+import { SadminModule } from '../src/modules/super-admin/sadmin.module';
+import { TestingController } from '../src/modules/testing/testing.controller';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
-import { getModelToken } from '@nestjs/mongoose';
+import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { Pool } from 'pg';
 import request from 'supertest';
@@ -55,7 +57,14 @@ describeSql('Comments and likes with PostgreSQL', () => {
     // Verify the additive schema script can be reapplied safely.
     await applySchema(pool);
     const module = await Test.createTestingModule({
-      imports: [DatabaseModule, CoreModule, BloggersPlatformModule],
+      imports: [
+        DatabaseModule,
+        CoreModule,
+        BloggersPlatformModule,
+        SadminModule,
+      ],
+      controllers: [TestingController],
+      providers: [{ provide: getConnectionToken(), useValue: {} }],
     })
       .overrideGuard(ThrottlerGuard)
       .useValue({ canActivate: () => true })
@@ -313,5 +322,209 @@ describeSql('Comments and likes with PostgreSQL', () => {
       }
     }
     expect((await read(`/comments/${id}`)).content).toBe(content);
+  });
+  const adminAuth = (req: request.Test) => req.auth('admin', 'qwerty');
+  const blogInput = {
+    name: 'New blog',
+    description: 'Description',
+    websiteUrl: 'https://example.com',
+  };
+  const postInput = {
+    title: 'New post',
+    shortDescription: 'Short',
+    content: 'Content',
+  };
+  const adminRoutes: Array<['get' | 'post' | 'put' | 'delete', string]> = [
+    ['get', '/sa/users'],
+    ['post', '/sa/users'],
+    ['delete', '/sa/users/1'],
+    ['get', '/sa/blogs'],
+    ['post', '/sa/blogs'],
+    ['put', '/sa/blogs/1'],
+    ['delete', '/sa/blogs/1'],
+    ['get', '/sa/blogs/1/posts'],
+    ['post', '/sa/blogs/1/posts'],
+    ['put', '/sa/blogs/1/posts/1'],
+    ['delete', '/sa/blogs/1/posts/1'],
+  ];
+
+  it.each(adminRoutes)(
+    'protects %s %s with Basic Auth',
+    async (method, path) => {
+      const server = app.getHttpServer();
+      await request(server)[method](path).expect(401);
+      await request(server)[method](path).auth('admin', 'wrong').expect(401);
+      await auth(request(server)[method](path)).expect(401);
+    },
+  );
+
+  it('creates, lists and deletes admin users; created users can log in', async () => {
+    const server = app.getHttpServer();
+    const input = {
+      login: 'newuser',
+      email: 'newuser@example.com',
+      password: 'password123',
+    };
+    const { body: user } = await adminAuth(request(server).post('/sa/users'))
+      .send(input)
+      .expect(201);
+    expect(user).toEqual({
+      id: expect.any(String),
+      login: input.login,
+      email: input.email,
+      createdAt: expect.any(String),
+    });
+    const { body: page } = await adminAuth(
+      request(server).get('/sa/users?searchLoginTerm=newuser'),
+    ).expect(200);
+    expect(page.items).toEqual([user]);
+    const login = await request(server)
+      .post('/auth/login')
+      .send({ loginOrEmail: input.login, password: input.password })
+      .expect(200);
+    await request(server)
+      .get('/auth/me')
+      .auth(login.body.accessToken, { type: 'bearer' })
+      .expect(200);
+    await adminAuth(request(server).delete(`/sa/users/${user.id}`)).expect(204);
+    const { body: after } = await adminAuth(
+      request(server).get('/sa/users?searchLoginTerm=newuser'),
+    ).expect(200);
+    expect(after.totalCount).toBe(0);
+    await adminAuth(request(server).delete(`/sa/users/${user.id}`)).expect(404);
+  });
+
+  it('supports all admin blog/post operations and exposes changes publicly', async () => {
+    const server = app.getHttpServer();
+    const { body: blog } = await adminAuth(request(server).post('/sa/blogs'))
+      .send(blogInput)
+      .expect(201);
+    expect(await read(`/blogs/${blog.id}`)).toEqual(blog);
+    const { body: blogs } = await adminAuth(
+      request(server).get('/sa/blogs?searchNameTerm=New'),
+    ).expect(200);
+    expect(blogs.items).toEqual([blog]);
+    const { body: post } = await adminAuth(
+      request(server).post(`/sa/blogs/${blog.id}/posts`),
+    )
+      .send(postInput)
+      .expect(201);
+    expect(await read(`/posts/${post.id}`)).toEqual(post);
+    await reaction(`/posts/${post.id}`, 'Like');
+    const { body: posts } = await adminAuth(
+      request(server).get(`/sa/blogs/${blog.id}/posts`),
+    ).expect(200);
+    expect(posts.items[0].extendedLikesInfo).toMatchObject({
+      likesCount: 1,
+      myStatus: 'None',
+    });
+    await adminAuth(
+      request(server).put(`/sa/blogs/${blog.id}/posts/${post.id}`),
+    )
+      .send({ ...postInput, title: 'Updated' })
+      .expect(204);
+    expect((await read(`/posts/${post.id}`)).title).toBe('Updated');
+    await adminAuth(request(server).put(`/sa/blogs/${blog.id}`))
+      .send({ ...blogInput, name: 'Updated blog' })
+      .expect(204);
+    expect((await read(`/blogs/${blog.id}`)).name).toBe('Updated blog');
+    await adminAuth(
+      request(server).delete(`/sa/blogs/${blog.id}/posts/${post.id}`),
+    ).expect(204);
+    await request(server).get(`/posts/${post.id}`).expect(404);
+    await adminAuth(request(server).delete(`/sa/blogs/${blog.id}`)).expect(204);
+    await request(server).get(`/blogs/${blog.id}`).expect(404);
+  });
+
+  it('does not update or delete a post through a different blog', async () => {
+    const server = app.getHttpServer();
+    const { body: blog } = await adminAuth(request(server).post('/sa/blogs'))
+      .send(blogInput)
+      .expect(201);
+    await adminAuth(request(server).put(`/sa/blogs/${blog.id}/posts/1`))
+      .send(postInput)
+      .expect(404);
+    await adminAuth(
+      request(server).delete(`/sa/blogs/${blog.id}/posts/1`),
+    ).expect(404);
+    expect((await read('/posts/1')).title).toBe('Post 1');
+  });
+
+  it.each(['invalid', '999', '9223372036854775808'])(
+    'returns 404 for unknown admin IDs: %s',
+    async (id) => {
+      const server = app.getHttpServer();
+      await adminAuth(request(server).delete(`/sa/users/${id}`)).expect(404);
+      await adminAuth(request(server).put(`/sa/blogs/${id}`))
+        .send(blogInput)
+        .expect(404);
+      await adminAuth(request(server).delete(`/sa/blogs/${id}`)).expect(404);
+      await adminAuth(request(server).get(`/sa/blogs/${id}/posts`)).expect(404);
+      await adminAuth(request(server).post(`/sa/blogs/${id}/posts`))
+        .send(postInput)
+        .expect(404);
+      await adminAuth(request(server).put(`/sa/blogs/1/posts/${id}`))
+        .send(postInput)
+        .expect(404);
+      await adminAuth(request(server).delete(`/sa/blogs/1/posts/${id}`)).expect(
+        404,
+      );
+      await request(server).get(`/blogs/${id}`).expect(404);
+    },
+  );
+
+  it('keeps filtered blog/user totals when requesting pages beyond the end', async () => {
+    const server = app.getHttpServer();
+    for (const [path, total] of [
+      ['/sa/blogs?searchNameTerm=blog', 1],
+      ['/sa/users?searchLoginTerm=user', 4],
+    ] as const) {
+      const { body } = await adminAuth(
+        request(server).get(`${path}&pageNumber=99&pageSize=1`),
+      ).expect(200);
+      expect(body).toMatchObject({
+        totalCount: total,
+        pagesCount: total,
+        items: [],
+      });
+    }
+    expect(
+      await read('/blogs?searchNameTerm=blog&pageNumber=99&pageSize=1'),
+    ).toMatchObject({ totalCount: 1, items: [] });
+  });
+
+  it('validates admin input without changing stored data', async () => {
+    const server = app.getHttpServer();
+    for (const path of ['/sa/blogs', '/sa/users', '/sa/blogs/1/posts']) {
+      const { body } = await adminAuth(request(server).post(path))
+        .send({})
+        .expect(400);
+      expect(body.errorsMessages.length).toBeGreaterThan(0);
+    }
+    for (const path of ['/sa/blogs/1', '/sa/blogs/1/posts/1']) {
+      await adminAuth(request(server).put(path)).send({}).expect(400);
+    }
+    expect((await read('/posts/1')).title).toBe('Post 1');
+  });
+
+  it('clears comments and reactions along with users, blogs and posts through the testing endpoint', async () => {
+    const { id } = await createComment();
+    await reaction(`/comments/${id}`, 'Like');
+    await reaction('/posts/1', 'Like');
+    await request(app.getHttpServer()).delete('/testing/all-data').expect(204);
+    for (const table of [
+      'users',
+      'device_sessions',
+      'blogs',
+      'posts',
+      'comments',
+      'post_likes',
+      'comment_likes',
+    ]) {
+      expect(
+        (await pool.query(`SELECT COUNT(*) AS count FROM ${table}`)).rows[0]
+          .count,
+      ).toBe('0');
+    }
   });
 });

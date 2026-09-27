@@ -33,7 +33,7 @@ export class UsersSqlQueryRepository extends UsersQueryRepository {
 
   async getByIdOrNotFoundFail(id: string): Promise<UserViewDto> {
     //id — bigint; нечисловая строка уронила бы запрос ошибкой 22P02
-    if (!/^\d+$/.test(id)) {
+    if (!/^\d+$/.test(id) || BigInt(id) > 9223372036854775807n) {
       throw new DomainException({
         code: DomainExceptionCode.NotFound,
         message: 'User not found',
@@ -78,7 +78,7 @@ export class UsersSqlQueryRepository extends UsersQueryRepository {
            OR ($1::text IS NOT NULL AND login ILIKE '%' || $1 || '%')
            OR ($2::text IS NOT NULL AND email ILIKE '%' || $2 || '%')
          )
-       ORDER BY ${sortExpression} ${sortDirection}
+       ORDER BY ${sortExpression} ${sortDirection}, id ${sortDirection}
        LIMIT $3 OFFSET $4`,
       [
         query.searchLoginTerm,
@@ -88,7 +88,20 @@ export class UsersSqlQueryRepository extends UsersQueryRepository {
       ],
     );
 
-    const totalCount = rows.length ? Number(rows[0].total_count) : 0;
+    const totalCount = rows.length
+      ? Number(rows[0].total_count)
+      : Number(
+          (
+            await this.pool.query<{ count: string }>(
+              `SELECT COUNT(*) AS count FROM users WHERE deleted_at IS NULL AND (
+          ($1::text IS NULL AND $2::text IS NULL)
+          OR ($1::text IS NOT NULL AND login ILIKE '%' || $1 || '%')
+          OR ($2::text IS NOT NULL AND email ILIKE '%' || $2 || '%')
+        )`,
+              [query.searchLoginTerm, query.searchEmailTerm],
+            )
+          ).rows[0].count,
+        );
     const items = rows.map((row) =>
       UserViewDto.mapToView(UserSqlEntity.fromRow(row)),
     );

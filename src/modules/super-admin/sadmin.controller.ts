@@ -12,12 +12,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
+import { PaginatedViewDto } from '../../core/dto/base.paginated.view-dto';
 import { GetUsersQueryParams } from '../user-accounts/api/input-dto/get-users-query-params.input-dto';
 import { UserViewDto } from '../user-accounts/api/view-dto/users.view-dto';
 import { GetUsersQuery } from '../user-accounts/application/queries/get-users.query-handler';
-import { ApiParam } from '@nestjs/swagger';
-import { IdValidationPipe } from 'src/core/pipes/id-validation.pipe';
+import { ApiBasicAuth, ApiParam } from '@nestjs/swagger';
 import { DeleteUserCommand } from '../user-accounts/application/usecases/delete-user.usecase';
 import { CreateUserInputDto } from '../user-accounts/api/input-dto/users.input-dto';
 import { GetUserByIdQuery } from '../user-accounts/application/queries/get-user-by-id.query-handler';
@@ -42,6 +41,8 @@ import {
 } from './admin-blog-posts.service';
 
 @Controller('sa')
+@UseGuards(BasicAuthGuard)
+@ApiBasicAuth('basicAuth')
 export class SadminController {
   constructor(
     private queryBus: QueryBus,
@@ -59,13 +60,11 @@ export class SadminController {
   @ApiParam({ name: 'id' }) //для сваггера
   @Delete('users/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(BasicAuthGuard)
-  async deleteUser(@Param('id', IdValidationPipe) id: string): Promise<void> {
+  async deleteUser(@Param('id') id: string): Promise<void> {
     return this.commandBus.execute(new DeleteUserCommand(id));
   }
 
   @Post('users')
-  @UseGuards(BasicAuthGuard)
   async createUser(@Body() body: CreateUserInputDto): Promise<UserViewDto> {
     //созданный админом юзер сразу считается подтверждённым
     const userId = await this.commandBus.execute<
@@ -78,7 +77,6 @@ export class SadminController {
 
   // create blog as admin
   @Post('blogs')
-  @UseGuards(BasicAuthGuard)
   async createBlog(@Body() body: CreateBlogInputDto): Promise<BlogViewDto> {
     const blogId = await this.commandBus.execute<CreateBlogCommand, string>(
       new CreateBlogCommand(body),
@@ -87,7 +85,6 @@ export class SadminController {
   }
 
   @Get('blogs')
-  @UseGuards(BasicAuthGuard)
   async getAllBlogs(
     @Query() query: GetBlogsQueryParams,
   ): Promise<PaginatedViewDto<BlogViewDto[]>> {
@@ -97,9 +94,8 @@ export class SadminController {
   @ApiParam({ name: 'id' })
   @Put('blogs/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(BasicAuthGuard)
   async updateBlog(
-    @Param('id', IdValidationPipe) id: string,
+    @Param('id') id: string,
     @Body() body: UpdateBlogInputDto,
   ): Promise<void> {
     return this.commandBus.execute(new UpdateBlogCommand(id, body));
@@ -108,13 +104,11 @@ export class SadminController {
   @ApiParam({ name: 'id' })
   @Delete('blogs/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(BasicAuthGuard)
-  async deleteBlog(@Param('id', IdValidationPipe) id: string): Promise<void> {
+  async deleteBlog(@Param('id') id: string): Promise<void> {
     return this.commandBus.execute(new DeleteBlogCommand(id));
   }
 
   @Post('blogs/:blogId/posts')
-  @UseGuards(BasicAuthGuard)
   async createBlogPost(
     @Param('blogId') blogId: string,
     @Body() body: CreatePostForBlogInputDto,
@@ -123,7 +117,6 @@ export class SadminController {
   }
 
   @Get('blogs/:blogId/posts')
-  @UseGuards(BasicAuthGuard)
   async getBlogPosts(
     @Param('blogId') blogId: string,
     @Query() query: GetPostsQueryParams,
@@ -133,7 +126,6 @@ export class SadminController {
 
   @Put('blogs/:blogId/posts/:postId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(BasicAuthGuard)
   async updateBlogPost(
     @Param('blogId') blogId: string,
     @Param('postId') postId: string,
@@ -144,7 +136,6 @@ export class SadminController {
 
   @Delete('blogs/:blogId/posts/:postId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(BasicAuthGuard)
   async deleteBlogPost(
     @Param('blogId') blogId: string,
     @Param('postId') postId: string,

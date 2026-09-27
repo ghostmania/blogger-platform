@@ -44,7 +44,17 @@ export class BlogsSqlQueryRepository {
       [query.searchNameTerm, query.pageSize, query.calculateSkip()],
     );
 
-    const totalCount = rows.length ? Number(rows[0].total_count) : 0;
+    const totalCount = rows.length
+      ? Number(rows[0].total_count)
+      : Number(
+          (
+            await this.pool.query<{ count: string }>(
+              `SELECT COUNT(*) AS count FROM blogs
+         WHERE $1::text IS NULL OR name ILIKE '%' || $1 || '%'`,
+              [query.searchNameTerm],
+            )
+          ).rows[0].count,
+        );
     const items = rows.map((row) =>
       BlogViewDto.mapToView(BlogSqlEntity.fromRow(row)),
     );
@@ -83,7 +93,7 @@ export class BlogsSqlQueryRepository {
 
   async getByIdOrNotFoundFail(id: string): Promise<BlogViewDto> {
     //id — bigint; нечисловая строка уронила бы запрос ошибкой 22P02
-    if (!/^\d+$/.test(id)) {
+    if (!/^\d+$/.test(id) || BigInt(id) > 9223372036854775807n) {
       throw new DomainException({
         code: DomainExceptionCode.NotFound,
         message: 'Blog not found',
