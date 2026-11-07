@@ -8,16 +8,14 @@ type TokenExpiresIn = JwtSignOptions['expiresIn'];
 export const ACCESS_TOKEN_SECRET =
   process.env.JWT_SECRET ?? 'access-token-secret';
 
-//СПЕЦИАЛЬНО короткие сроки: автотесты инкубатора ждут, что access протухнет
-//после паузы в 10 секунд, а refresh — после 20. Переопределяются через env,
-//если нужно погонять руками без постоянного релогина
-export const ACCESS_TOKEN_EXPIRES_IN = (process.env.ACCESS_TOKEN_TTL ??
-  '10s') as TokenExpiresIn;
+//Первый блок автопроверки требует access token не короче пяти минут.
+export const ACCESS_TOKEN_EXPIRES_IN = (process.env.ACCESS_TOKEN_TTL ||
+  '5m') as TokenExpiresIn;
 
 export const REFRESH_TOKEN_SECRET =
   process.env.JWT_REFRESH_SECRET ?? 'refresh-token-secret';
 
-export const REFRESH_TOKEN_EXPIRES_IN = (process.env.REFRESH_TOKEN_TTL ??
+export const REFRESH_TOKEN_EXPIRES_IN = (process.env.REFRESH_TOKEN_TTL ||
   '20s') as TokenExpiresIn;
 
 //сроки жизни кодов из писем

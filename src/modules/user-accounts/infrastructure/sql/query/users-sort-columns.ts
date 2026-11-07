@@ -5,9 +5,6 @@ import { SortDirection } from '../../../../../core/dto/base.query-params.input-d
  * ORDER BY нельзя параметризовать через $1 — имя колонки и направление
  * попадают в SQL текстом. Поэтому оба значения проходят через белый список.
  * Первый рубеж — @IsEnum в DTO, этот второй; полагаться на один нельзя.
- *
- * В монго-версии этой проблемы нет вовсе: там sort принимает объект,
- * и значение не может «вытечь» в текст запроса.
  */
 const SORT_COLUMNS: Record<UsersSortBy, string> = {
   [UsersSortBy.CreatedAt]: 'created_at',
@@ -20,7 +17,7 @@ const SORT_DIRECTIONS: Record<SortDirection, string> = {
   [SortDirection.Desc]: 'DESC',
 };
 
-//COLLATE "C" даёт побайтовый порядок (как в монго), но применим только
+//COLLATE "C" даёт побайтовый порядок, но применим только
 //к текстовым колонкам — на timestamptz Postgres выдаст ошибку
 const TEXT_COLUMNS = new Set(['login', 'email']);
 

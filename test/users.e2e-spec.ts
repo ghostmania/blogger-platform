@@ -15,7 +15,7 @@ import { ACCESS_TOKEN_SECRET } from '../src/modules/user-accounts/constants/auth
 import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../src/modules/user-accounts/constants/auth-tokens.inject-constants';
 import { DomainExceptionCode } from '../src/core/exceptions/domain-exception-codes';
 
-const NON_EXISTENT_ID = '63189b06003380064c4193be';
+const NON_EXISTENT_ID = '9223372036854775807';
 
 describe('users', () => {
   let app: INestApplication;
@@ -181,7 +181,7 @@ describe('users', () => {
     expect(responseBody.code).toBe(DomainExceptionCode.NotFound);
   });
 
-  it('should return 400 while deleting user with invalid ObjectId', async () => {
+  it('should return 400 while deleting user with invalid ID', async () => {
     const { body: responseBody } = await request(app.getHttpServer())
       .delete(`/users/not-an-object-id`)
       .auth('admin', 'qwerty')

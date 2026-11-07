@@ -7,8 +7,6 @@ export class UserViewDto {
   email: string;
   createdAt: Date;
 
-  //принимает контракт сущности, а не UserDocument: одна и та же view-модель
-  //собирается и из монго-документа, и из SQL-сущности
   static mapToView(user: UserEntity): UserViewDto {
     const dto = new UserViewDto();
 

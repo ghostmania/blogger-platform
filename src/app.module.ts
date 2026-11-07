@@ -2,10 +2,11 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserAccountsModule } from './modules/user-accounts/user-accounts.module';
-import { MongooseModule } from '@nestjs/mongoose';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { postgresOptions } from './core/database/postgres-options';
+import { User } from './modules/user-accounts/domain/user.entity';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TestingModule } from './modules/testing/testing.module';
-// import { BloggersPlatformModule } from './modules/bloggers-platform/bloggers-platform.module';
 import { CoreModule } from './core/core.module';
 import { DatabaseModule } from './core/database/database.module';
 import { APP_FILTER } from '@nestjs/core';
@@ -22,20 +23,22 @@ import { BloggersPlatformModule } from './modules/bloggers-platform/bloggers-pla
   imports: [
     //Postgres-пул для SQL-реализации user-accounts
     DatabaseModule,
-    MongooseModule.forRoot(
-      process.env.MONGO_URI ?? 'mongodb://localhost/nest-bloggers-platform',
-    ), //локально дефолт, на проде — MONGO_URI из окружения (напр. MongoDB Atlas)
+    TypeOrmModule.forRootAsync({
+      useFactory: () => ({
+        type: 'postgres',
+        ...postgresOptions(),
+        entities: [User],
+        synchronize: false,
+      }),
+    }),
     //ip-restriction: ThrottlerModule глобальный, но ThrottlerGuard навешивается
     //точечно на auth-эндпоинты — остальное API не ограничиваем
     ThrottlerModule.forRoot({
+      skipIf: () => process.env.IP_RESTRICTION_ENABLED !== 'true',
       throttlers: [{ ttl: RATE_LIMIT_WINDOW_MS, limit: RATE_LIMIT_MAX }],
     }),
     UserAccountsModule, //все модули должны быть заимпортированы в корневой модуль, либо напрямую, либо по цепочке (через другие модули)
     TestingModule,
-    //ОТКЛЮЧЁН НА ВРЕМЯ ПЕРЕВОДА НА SQL.
-    //Роуты /blogs, /posts, /comments не поднимаются; код модуля не тронут —
-    //чтобы вернуть, достаточно раскомментировать эту строку и импорт выше.
-    //Сейчас на SQL работают только /auth/*, /security/devices, /users, /testing.
     BloggersPlatformModule,
     CoreModule,
     SadminModule,

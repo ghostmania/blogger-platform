@@ -17,11 +17,12 @@ export class LoginUserCommand {
 }
 
 @CommandHandler(LoginUserCommand)
-export class LoginUserUseCase
-  implements ICommandHandler<LoginUserCommand, LoginUserResult>
-{
+export class LoginUserUseCase implements ICommandHandler<
+  LoginUserCommand,
+  LoginUserResult
+> {
   constructor(
-    //как и в CreateUserUseCase: модель мангуста ушла, сессию создаёт репозиторий
+    //Создание сессии делегировано репозиторию.
     private securityDevicesRepository: SecurityDevicesRepository,
     private authTokensService: AuthTokensService,
   ) {}

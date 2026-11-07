@@ -15,8 +15,7 @@ export class SecurityDevicesSqlQueryRepository extends SecurityDevicesQueryRepos
   }
 
   async getActiveSessionsByUserId(userId: string): Promise<DeviceViewDto[]> {
-    //в монго протухшие сессии убирал TTL-индекс; в Postgres автоудаления
-    //по времени нет, поэтому отсекаем их прямо в выборке
+    //Просроченные сессии исключаются из списка активных.
     const { rows } = await this.pool.query<DeviceSessionRow>(
       `SELECT device_id, user_id, ip, title,
               last_active_date, expiration_date,

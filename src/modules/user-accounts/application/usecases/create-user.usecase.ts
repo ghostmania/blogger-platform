@@ -5,9 +5,6 @@ import { CryptoService } from '../crypto.service';
 import { DomainException } from '../../../../core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from '../../../../core/exceptions/domain-exception-codes';
 
-//нарушение уникальности: у монго свой код ошибки, у Postgres — свой.
-//Use case общий для обеих реализаций, поэтому понимает оба
-const MONGO_DUPLICATE_KEY = 11000;
 const POSTGRES_UNIQUE_VIOLATION = '23505';
 
 export class CreateUserCommand {
@@ -16,12 +13,11 @@ export class CreateUserCommand {
 
 //создаёт НЕподтверждённого юзера — база для регистрации и для создания юзера админом
 @CommandHandler(CreateUserCommand)
-export class CreateUserUseCase
-  implements ICommandHandler<CreateUserCommand, string>
-{
+export class CreateUserUseCase implements ICommandHandler<
+  CreateUserCommand,
+  string
+> {
   constructor(
-    //никакой модели мангуста: сущность создаёт репозиторий, потому что
-    //способ её создания зависит от хранилища, а бизнес-правила — нет
     private usersRepository: UsersRepository,
     private cryptoService: CryptoService,
   ) {}
@@ -69,7 +65,7 @@ export class CreateUserUseCase
 
   /**
    * Определяет нарушенное поле по ошибке драйвера и отдаёт 400.
-   * Монго сообщает его в keyPattern, Postgres — в имени индекса (constraint).
+   * PostgreSQL сообщает имя индекса в constraint.
    */
   private throwIfDuplicateKeyError(error: unknown): void {
     if (typeof error !== 'object' || error === null || !('code' in error)) {
@@ -77,17 +73,6 @@ export class CreateUserUseCase
     }
 
     const code = (error as { code: unknown }).code;
-
-    if (code === MONGO_DUPLICATE_KEY) {
-      const keyPattern =
-        'keyPattern' in error
-          ? (error as { keyPattern: Record<string, unknown> }).keyPattern
-          : {};
-
-      throw this.buildDuplicateException(
-        'email' in keyPattern ? 'email' : 'login',
-      );
-    }
 
     if (code === POSTGRES_UNIQUE_VIOLATION) {
       const constraint =

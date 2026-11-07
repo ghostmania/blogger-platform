@@ -4,7 +4,7 @@ import {
   emailConstraints,
   loginConstraints,
   passwordConstraints,
-} from '../../domain/user.entity';
+} from '../../domain/user.constraints';
 import { IsStringWithTrim } from '../../../../core/decorators/validation/is-string-with-trim';
 
 // Доступные декораторы для валидации

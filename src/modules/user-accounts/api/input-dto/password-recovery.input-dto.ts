@@ -1,6 +1,6 @@
 import { IsString, Matches } from 'class-validator';
 import { Trim } from '../../../../core/decorators/transform/trim';
-import { emailConstraints } from '../../domain/user.entity';
+import { emailConstraints } from '../../domain/user.constraints';
 
 //dto для боди POST /auth/password-recovery
 export class PasswordRecoveryInputDto {

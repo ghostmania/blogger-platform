@@ -3,7 +3,8 @@ import { TestingController } from '../src/modules/testing/testing.controller';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
-import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from '../src/modules/user-accounts/domain/user.entity';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { Pool } from 'pg';
 import request from 'supertest';
@@ -58,20 +59,22 @@ describeSql('Comments and likes with PostgreSQL', () => {
     await applySchema(pool);
     const module = await Test.createTestingModule({
       imports: [
+        TypeOrmModule.forRoot({
+          type: 'postgres',
+          url: process.env.TEST_DATABASE_URL,
+          entities: [User],
+          schema,
+          synchronize: false,
+        }),
         DatabaseModule,
         CoreModule,
         BloggersPlatformModule,
         SadminModule,
       ],
       controllers: [TestingController],
-      providers: [{ provide: getConnectionToken(), useValue: {} }],
     })
       .overrideGuard(ThrottlerGuard)
       .useValue({ canActivate: () => true })
-      .overrideProvider(getModelToken('User'))
-      .useValue({})
-      .overrideProvider(getModelToken('DeviceSession'))
-      .useValue({})
       .overrideProvider(PG_POOL)
       .useValue(pool)
       .compile();

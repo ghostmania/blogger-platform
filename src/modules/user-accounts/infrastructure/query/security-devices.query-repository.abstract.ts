@@ -1,6 +1,6 @@
 import { DeviceViewDto } from '../../api/view-dto/devices.view-dto';
 
-//контракт read-модели активных сессий; реализации — Mongo и SQL
+//Контракт чтения активных сессий.
 export abstract class SecurityDevicesQueryRepository {
   abstract getActiveSessionsByUserId(userId: string): Promise<DeviceViewDto[]>;
 }

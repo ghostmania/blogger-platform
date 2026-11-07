@@ -1,12 +1,10 @@
 import { INestApplication } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { initSettings } from './helpers/init-settings';
 import request from 'supertest';
 import { pipesSetup } from '../src/setup/pipes.setup';
 
 //отдельная БД на спеку — чтобы параллельные spec-файлы не затирали данные друг друга через deleteAll
-const TEST_MONGO_URI =
-  'mongodb://localhost:27017/nest-bloggers-platform-test-posts';
-const NON_EXISTENT_ID = '507f1f77bcf86cd799439011';
+const NON_EXISTENT_ID = '9223372036854775807';
 
 //запись в блоги/посты доступна только суперадмину (basic auth)
 const ADMIN = { user: 'admin', pass: 'qwerty' };
@@ -27,15 +25,7 @@ describe('Posts API (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    process.env.MONGO_URI = TEST_MONGO_URI;
-    const { AppModule } = await import('../src/app.module');
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    pipesSetup(app);
-    await app.init();
+    ({ app } = await initSettings('posts'));
   });
 
   beforeEach(async () => {

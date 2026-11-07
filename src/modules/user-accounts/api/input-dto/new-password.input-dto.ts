@@ -1,6 +1,6 @@
 import { IsString } from 'class-validator';
 import { Trim } from '../../../../core/decorators/transform/trim';
-import { passwordConstraints } from '../../domain/user.entity';
+import { passwordConstraints } from '../../domain/user.constraints';
 import { IsStringWithTrim } from '../../../../core/decorators/validation/is-string-with-trim';
 
 //dto для боди POST /auth/new-password

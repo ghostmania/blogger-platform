@@ -18,8 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
   deleted_at               timestamptz
 );
 
--- прямой перенос partialFilterExpression из монго-схемы: soft-deleted юзер
--- не должен блокировать повторную регистрацию того же логина/email
+-- Удалённый пользователь не блокирует повторную регистрацию логина/email.
 CREATE UNIQUE INDEX IF NOT EXISTS users_login_unique_idx
   ON users (login) WHERE deleted_at IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx

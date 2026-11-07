@@ -1,3 +1,4 @@
+import { postgresOptions } from './postgres-options';
 import { Global, Inject, Module, OnModuleDestroy } from '@nestjs/common';
 import { Pool } from 'pg';
 import { PG_POOL } from './database.constants';
@@ -9,19 +10,10 @@ import { PG_POOL } from './database.constants';
     {
       provide: PG_POOL,
       useFactory: (): Pool => {
-        const connectionString = process.env.DATABASE_URL;
-
-        if (!connectionString) {
-          //падаем громко на старте: молчаливый дефолт увёл бы запись
-          //в непонятную базу
-          throw new Error('DATABASE_URL is not set');
-        }
-
+        const { url, ssl } = postgresOptions();
         return new Pool({
-          connectionString,
-          //Neon терминирует TLS валидным сертификатом, но проверить цепочку
-          //в контейнере часто нечем; канал при этом остаётся зашифрованным
-          ssl: { rejectUnauthorized: false },
+          connectionString: url,
+          ssl,
           max: 10,
         });
       },

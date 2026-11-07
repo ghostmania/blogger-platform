@@ -1,18 +1,11 @@
+import { postgresOptions } from './postgres-options';
 import 'dotenv/config';
 import { Pool } from 'pg';
 import { applySchema } from './apply-schema';
 
 async function main(): Promise<void> {
-  const connectionString = process.env.DATABASE_URL;
-
-  if (!connectionString) {
-    throw new Error('DATABASE_URL is not set');
-  }
-
-  const pool = new Pool({
-    connectionString,
-    ssl: { rejectUnauthorized: false },
-  });
+  const { url, ssl } = postgresOptions();
+  const pool = new Pool({ connectionString: url, ssl });
 
   try {
     await applySchema(pool);

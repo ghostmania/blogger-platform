@@ -6,7 +6,6 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "up-mongo-db": "docker-compose up -d",
     "db:init": "ts-node src/core/database/init-db.cli.ts",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -20,7 +19,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:comments:sql": "bash test/run-comments-sql-tests.sh",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "db:up": "docker compose up -d",
+    "test:e2e:local": "bash test/run-postgres-tests.sh"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^2.3.7",
@@ -28,11 +29,11 @@
     "@nestjs/core": "^11.0.6",
     "@nestjs/cqrs": "^11.0.0",
     "@nestjs/jwt": "^11.0.2",
-    "@nestjs/mongoose": "^11.0.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.6",
     "@nestjs/swagger": "^11.0.3",
     "@nestjs/throttler": "^6.5.0",
+    "@nestjs/typeorm": "11.0.0",
     "@types/bcrypt": "^5.0.2",
     "@vercel/functions": "^3.9.5",
     "bcrypt": "^5.1.1",
@@ -40,14 +41,14 @@
     "class-validator": "^0.14.1",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
-    "mongoose": "^8.9.5",
     "nodemailer": "^9.0.5",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "pg": "^8.23.0",
     "reflect-metadata": "^0.2.0",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "typeorm": "0.3.28"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.2",

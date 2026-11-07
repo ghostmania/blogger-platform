@@ -1,7 +1,8 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
-import { getModelToken } from '@nestjs/mongoose';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { User } from '../src/modules/user-accounts/domain/user.entity';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import request from 'supertest';
 import { BloggersPlatformModule } from '../src/modules/bloggers-platform/bloggers-platform.module';
@@ -29,9 +30,7 @@ describe('Create comment HTTP flow', () => {
     })
       .overrideGuard(ThrottlerGuard)
       .useValue({ canActivate: () => true })
-      .overrideProvider(getModelToken('User'))
-      .useValue({})
-      .overrideProvider(getModelToken('DeviceSession'))
+      .overrideProvider(getRepositoryToken(User))
       .useValue({})
       .overrideProvider(PG_POOL)
       .useValue(pool)

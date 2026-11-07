@@ -1,27 +1,19 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 
-import { User, UserSchema } from './domain/user.entity';
-import {
-  DeviceSession,
-  DeviceSessionSchema,
-} from './domain/device-session.entity';
+import { User } from './domain/user.entity';
 import { UsersController } from './api/users.controller';
 import { AuthController } from './api/auth.controller';
 import { SecurityDevicesController } from './api/security-devices.controller';
 
 import { UsersRepository } from './infrastructure/users.repository.abstract';
-// import { UsersMongoRepository } from './infrastructure/users.mongo-repository';
-import { UsersSqlRepository } from './infrastructure/sql/users.sql-repository';
+import { UsersTypeOrmRepository } from './infrastructure/typeorm/users.typeorm-repository';
 import { SecurityDevicesRepository } from './infrastructure/security-devices.repository.abstract';
-import { SecurityDevicesMongoRepository } from './infrastructure/security-devices.mongo-repository';
 import { SecurityDevicesSqlRepository } from './infrastructure/sql/security-devices.sql-repository';
 import { UsersQueryRepository } from './infrastructure/query/users.query-repository.abstract';
-import { UsersMongoQueryRepository } from './infrastructure/query/users.mongo-query-repository';
-import { UsersSqlQueryRepository } from './infrastructure/sql/query/users.sql-query-repository';
+import { UsersTypeOrmQueryRepository } from './infrastructure/typeorm/users.typeorm-query-repository';
 import { SecurityDevicesQueryRepository } from './infrastructure/query/security-devices.query-repository.abstract';
-import { SecurityDevicesMongoQueryRepository } from './infrastructure/query/security-devices.mongo-query-repository';
 import { SecurityDevicesSqlQueryRepository } from './infrastructure/sql/query/security-devices.sql-query-repository';
 import { AuthQueryRepository } from './infrastructure/query/auth.query-repository';
 import { UsersExternalQueryRepository } from './infrastructure/external-query/users.external-query-repository';
@@ -91,38 +83,16 @@ const queryHandlers = [
   GetDevicesQueryHandler,
 ];
 
-/**
- * ВЫБОР ХРАНИЛИЩА — ЕДИНСТВЕННОЕ МЕСТО, КОТОРОЕ НАДО ТРОНУТЬ.
- *
- * Контроллеры, use case'ы, guards и view-DTO ниже по стеку не знают, какая
- * база под ними: они работают через абстрактные контракты репозиториев.
- * Переключается через USER_ACCOUNTS_DB=mongo|sql в .env (по умолчанию sql).
- *
- * Сравнить реализации: infrastructure/users.mongo-repository.ts
- *                  vs infrastructure/sql/users.sql-repository.ts
- */
-const USE_SQL = (process.env.USER_ACCOUNTS_DB ?? 'sql') !== 'mongo';
-
 const persistenceProviders = [
-  {
-    provide: UsersRepository,
-    useClass: UsersSqlRepository,
-  },
+  { provide: UsersRepository, useClass: UsersTypeOrmRepository },
+  { provide: UsersQueryRepository, useClass: UsersTypeOrmQueryRepository },
   {
     provide: SecurityDevicesRepository,
-    useClass: USE_SQL
-      ? SecurityDevicesSqlRepository
-      : SecurityDevicesMongoRepository,
-  },
-  {
-    provide: UsersQueryRepository,
-    useClass: USE_SQL ? UsersSqlQueryRepository : UsersMongoQueryRepository,
+    useClass: SecurityDevicesSqlRepository,
   },
   {
     provide: SecurityDevicesQueryRepository,
-    useClass: USE_SQL
-      ? SecurityDevicesSqlQueryRepository
-      : SecurityDevicesMongoQueryRepository,
+    useClass: SecurityDevicesSqlQueryRepository,
   },
 ];
 
@@ -148,13 +118,7 @@ const tokenStrategies = [
 ];
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema },
-      { name: DeviceSession.name, schema: DeviceSessionSchema },
-    ]),
-    NotificationsModule,
-  ],
+  imports: [TypeOrmModule.forFeature([User]), NotificationsModule],
   controllers: [UsersController, AuthController, SecurityDevicesController],
   providers: [
     ...persistenceProviders,

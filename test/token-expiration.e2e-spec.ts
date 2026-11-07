@@ -1,3 +1,6 @@
+import { JwtService } from '@nestjs/jwt';
+import { ACCESS_TOKEN_SECRET } from '../src/modules/user-accounts/constants/auth.constants';
+import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../src/modules/user-accounts/constants/auth-tokens.inject-constants';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { UsersTestManager } from './helpers/users-test-manager';
@@ -19,7 +22,18 @@ describe('token expiration', () => {
   };
 
   beforeAll(async () => {
-    const result = await initSettings('nest-bloggers-platform-test-ttl');
+    const result = await initSettings(
+      'nest-bloggers-platform-test-ttl',
+      (builder) =>
+        builder
+          .overrideProvider(ACCESS_TOKEN_STRATEGY_INJECT_TOKEN)
+          .useValue(
+            new JwtService({
+              secret: ACCESS_TOKEN_SECRET,
+              signOptions: { expiresIn: '1s' },
+            }),
+          ),
+    );
     app = result.app;
     userTestManger = result.userTestManger;
     await deleteAllData(app);
@@ -30,7 +44,7 @@ describe('token expiration', () => {
     await app.close();
   });
 
-  it('should reject an access token after a 10 sec delay', async () => {
+  it('should reject an access token after a short test-only TTL', async () => {
     const { accessToken } = await userTestManger.loginWithTokens(
       userInput.login,
       userInput.password,
@@ -38,7 +52,7 @@ describe('token expiration', () => {
 
     await userTestManger.me(accessToken);
 
-    await delay(10_500);
+    await delay(1_100);
 
     await request(app.getHttpServer())
       .get(`/auth/me`)

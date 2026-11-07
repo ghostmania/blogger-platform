@@ -1,13 +1,6 @@
 import { CreateDeviceSessionDomainDto } from '../dto/create-device-session.domain.dto';
 
-/**
- * SQL-версия сессии устройства (см. domain/device-session.entity.ts).
- *
- * Важное отличие от монго: там протухшие сессии подчищал TTL-индекс
- * ({ expirationDate: 1 }, { expireAfterSeconds: 0 }). В Postgres автоудаления
- * по времени нет, поэтому протухшие строки отсекаются прямо в выборке
- * (WHERE expiration_date > now()) — см. security-devices.sql-query-repository.
- */
+/** Сессия устройства. Просроченные сессии отфильтровываются при чтении. */
 
 //строка таблицы device_sessions; user_id — bigint, драйвер отдаёт его строкой
 export type DeviceSessionRow = {
