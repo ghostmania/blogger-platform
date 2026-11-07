@@ -1,3 +1,4 @@
+import { DeviceSession } from '../src/modules/user-accounts/domain/device-session.entity';
 import { SadminModule } from '../src/modules/super-admin/sadmin.module';
 import { TestingController } from '../src/modules/testing/testing.controller';
 import { INestApplication } from '@nestjs/common';
@@ -62,7 +63,7 @@ describeSql('Comments and likes with PostgreSQL', () => {
         TypeOrmModule.forRoot({
           type: 'postgres',
           url: process.env.TEST_DATABASE_URL,
-          entities: [User],
+          entities: [User, DeviceSession],
           schema,
           synchronize: false,
         }),

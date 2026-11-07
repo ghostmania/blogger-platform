@@ -6,6 +6,7 @@ import { UserContextDto } from './user-context.dto';
  */
 export class RefreshTokenContextDto extends UserContextDto {
   deviceId: string;
+  lastActiveDate: string;
 }
 
 /**

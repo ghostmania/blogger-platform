@@ -1,3 +1,4 @@
+import { DeviceSession } from '../src/modules/user-accounts/domain/device-session.entity';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
@@ -30,6 +31,8 @@ describe('Create comment HTTP flow', () => {
     })
       .overrideGuard(ThrottlerGuard)
       .useValue({ canActivate: () => true })
+      .overrideProvider(getRepositoryToken(DeviceSession))
+      .useValue({})
       .overrideProvider(getRepositoryToken(User))
       .useValue({})
       .overrideProvider(PG_POOL)

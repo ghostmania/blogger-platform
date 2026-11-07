@@ -1,3 +1,4 @@
+import { UsersRepository } from '../../infrastructure/users.repository.abstract';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
@@ -25,7 +26,10 @@ export class RefreshTokenStrategy extends PassportStrategy(
   Strategy,
   REFRESH_TOKEN_STRATEGY_NAME,
 ) {
-  constructor(private securityDevicesRepository: SecurityDevicesRepository) {
+  constructor(
+    private securityDevicesRepository: SecurityDevicesRepository,
+    private usersRepository: UsersRepository,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         extractRefreshTokenFromCookie,
@@ -47,13 +51,23 @@ export class RefreshTokenStrategy extends PassportStrategy(
       payload.deviceId,
     );
 
-    if (!session || !session.isIssuedAt(payload.lastActiveDate)) {
+    if (
+      !session ||
+      session.userId !== payload.id ||
+      session.expirationDate.getTime() <= Date.now() ||
+      !session.isIssuedAt(payload.lastActiveDate) ||
+      !(await this.usersRepository.findById(payload.id))
+    ) {
       throw new DomainException({
         code: DomainExceptionCode.Unauthorized,
         message: 'Refresh token is revoked or expired',
       });
     }
 
-    return { id: payload.id, deviceId: payload.deviceId };
+    return {
+      id: payload.id,
+      deviceId: payload.deviceId,
+      lastActiveDate: payload.lastActiveDate,
+    };
   }
 }

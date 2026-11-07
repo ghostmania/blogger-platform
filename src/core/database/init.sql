@@ -102,3 +102,9 @@ CREATE TABLE IF NOT EXISTS comment_likes (
 
 CREATE INDEX IF NOT EXISTS comment_likes_status_added_at_idx
   ON comment_likes (comment_id, status, added_at DESC, user_id DESC);
+
+-- Счётчики IP + endpoint. Время запросов хранится в миллисекундах Unix.
+CREATE TABLE IF NOT EXISTS ip_restrictions (
+  key varchar(255) PRIMARY KEY,
+  hits jsonb NOT NULL DEFAULT '[]'::jsonb
+);

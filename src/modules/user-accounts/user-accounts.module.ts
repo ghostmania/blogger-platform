@@ -1,3 +1,4 @@
+import { DeviceSession } from './domain/device-session.entity';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -10,11 +11,11 @@ import { SecurityDevicesController } from './api/security-devices.controller';
 import { UsersRepository } from './infrastructure/users.repository.abstract';
 import { UsersTypeOrmRepository } from './infrastructure/typeorm/users.typeorm-repository';
 import { SecurityDevicesRepository } from './infrastructure/security-devices.repository.abstract';
-import { SecurityDevicesSqlRepository } from './infrastructure/sql/security-devices.sql-repository';
+import { SecurityDevicesTypeOrmRepository } from './infrastructure/typeorm/security-devices.typeorm-repository';
 import { UsersQueryRepository } from './infrastructure/query/users.query-repository.abstract';
 import { UsersTypeOrmQueryRepository } from './infrastructure/typeorm/users.typeorm-query-repository';
 import { SecurityDevicesQueryRepository } from './infrastructure/query/security-devices.query-repository.abstract';
-import { SecurityDevicesSqlQueryRepository } from './infrastructure/sql/query/security-devices.sql-query-repository';
+import { SecurityDevicesTypeOrmQueryRepository } from './infrastructure/typeorm/security-devices.typeorm-query-repository';
 import { AuthQueryRepository } from './infrastructure/query/auth.query-repository';
 import { UsersExternalQueryRepository } from './infrastructure/external-query/users.external-query-repository';
 
@@ -88,11 +89,11 @@ const persistenceProviders = [
   { provide: UsersQueryRepository, useClass: UsersTypeOrmQueryRepository },
   {
     provide: SecurityDevicesRepository,
-    useClass: SecurityDevicesSqlRepository,
+    useClass: SecurityDevicesTypeOrmRepository,
   },
   {
     provide: SecurityDevicesQueryRepository,
-    useClass: SecurityDevicesSqlQueryRepository,
+    useClass: SecurityDevicesTypeOrmQueryRepository,
   },
 ];
 
@@ -118,7 +119,10 @@ const tokenStrategies = [
 ];
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), NotificationsModule],
+  imports: [
+    TypeOrmModule.forFeature([User, DeviceSession]),
+    NotificationsModule,
+  ],
   controllers: [UsersController, AuthController, SecurityDevicesController],
   providers: [
     ...persistenceProviders,

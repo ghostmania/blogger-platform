@@ -14,6 +14,7 @@ export class RefreshTokenCommand {
     public userId: string,
     public deviceId: string,
     public ip: string,
+    public lastActiveDate: string,
   ) {}
 }
 
@@ -31,13 +32,19 @@ export class RefreshTokenUseCase implements ICommandHandler<
     userId,
     deviceId,
     ip,
+    lastActiveDate: previousLastActiveDate,
   }: RefreshTokenCommand): Promise<RefreshTokenResult> {
     const session =
       await this.securityDevicesRepository.findByDeviceId(deviceId);
 
     //живость сессии уже проверил RefreshTokenAuthGuard; здесь страхуемся от гонки
     //(параллельный logout/terminate между guard'ом и хендлером)
-    if (!session) {
+    if (
+      !session ||
+      session.userId !== userId ||
+      !session.isIssuedAt(previousLastActiveDate) ||
+      session.expirationDate.getTime() <= Date.now()
+    ) {
       throw new DomainException({
         code: DomainExceptionCode.Unauthorized,
         message: 'Device session not found',
@@ -46,12 +53,25 @@ export class RefreshTokenUseCase implements ICommandHandler<
 
     const accessToken = this.authTokensService.createAccessToken(userId);
     const { token, lastActiveDate, expirationDate } =
-      this.authTokensService.createRefreshToken(userId, deviceId);
+      this.authTokensService.createRefreshToken(
+        userId,
+        deviceId,
+        new Date(previousLastActiveDate),
+      );
 
     //перевод сессии на новый токен отзывает предыдущий: старый lastActiveDate
     //больше не совпадёт с тем, что лежит в БД
     session.refresh(lastActiveDate, expirationDate, ip);
-    await this.securityDevicesRepository.save(session);
+    const rotated = await this.securityDevicesRepository.rotate(
+      session,
+      new Date(previousLastActiveDate),
+    );
+    if (!rotated) {
+      throw new DomainException({
+        code: DomainExceptionCode.Unauthorized,
+        message: 'Refresh token is revoked or expired',
+      });
+    }
 
     return { accessToken, refreshToken: token };
   }

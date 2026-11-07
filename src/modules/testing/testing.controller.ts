@@ -16,7 +16,7 @@ export class TestingController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteAll(): Promise<void> {
     await this.pool.query(
-      'TRUNCATE TABLE device_sessions, users, blogs RESTART IDENTITY CASCADE',
+      'TRUNCATE TABLE device_sessions, users, blogs, ip_restrictions RESTART IDENTITY CASCADE',
     );
   }
 }

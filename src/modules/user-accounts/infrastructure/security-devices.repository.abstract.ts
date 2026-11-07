@@ -9,7 +9,15 @@ export abstract class SecurityDevicesRepository {
 
   abstract save(session: DeviceSessionEntity): Promise<void>;
 
-  abstract findByDeviceId(deviceId: string): Promise<DeviceSessionEntity | null>;
+  // Compare-and-swap: rotate only the version presented by the caller.
+  abstract rotate(
+    session: DeviceSessionEntity,
+    previousLastActiveDate: Date,
+  ): Promise<boolean>;
+
+  abstract findByDeviceId(
+    deviceId: string,
+  ): Promise<DeviceSessionEntity | null>;
 
   abstract findOrNotFoundFail(deviceId: string): Promise<DeviceSessionEntity>;
 

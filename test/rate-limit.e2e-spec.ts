@@ -10,8 +10,7 @@ import {
 } from '../src/modules/user-accounts/constants/auth.constants';
 
 //единственная спека, где ip-restriction включён (в остальных он мешал бы).
-//счётчик throttler'а живёт в памяти процесса и не сбрасывается вместе с БД,
-//поэтому каждый тест бьёт по СВОЕМУ эндпоинту — иначе они мешали бы друг другу
+//Счётчики хранятся в PostgreSQL и очищаются вместе с тестовыми данными.
 describe('ip-restriction (rate limit)', () => {
   let app: INestApplication;
   let emailServiceMock: EmailServiceMock;
@@ -86,8 +85,6 @@ describe('ip-restriction (rate limit)', () => {
   }, 30_000);
 
   it('should not rate limit endpoints outside the auth flow', async () => {
-    //раньше здесь был /blogs, но bloggers-platform временно отключён в
-    //app.module на время перевода на SQL. Подойдёт любой живой не-auth роут:
     //ThrottlerGuard навешен точечно на auth-ручки, а на /users его нет
     for (let i = 0; i < RATE_LIMIT_MAX + 3; ++i) {
       await request(app.getHttpServer())

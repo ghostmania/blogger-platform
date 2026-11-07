@@ -1,3 +1,7 @@
+import { DeviceSession } from './modules/user-accounts/domain/device-session.entity';
+import { IpRestriction } from './core/rate-limiting/ip-restriction.entity';
+import { RateLimitingModule } from './core/rate-limiting/rate-limiting.module';
+import { TypeOrmThrottlerStorage } from './core/rate-limiting/typeorm-throttler-storage';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -27,15 +31,26 @@ import { BloggersPlatformModule } from './modules/bloggers-platform/bloggers-pla
       useFactory: () => ({
         type: 'postgres',
         ...postgresOptions(),
-        entities: [User],
+        entities: [User, DeviceSession, IpRestriction],
         synchronize: false,
       }),
     }),
     //ip-restriction: ThrottlerModule глобальный, но ThrottlerGuard навешивается
     //точечно на auth-эндпоинты — остальное API не ограничиваем
-    ThrottlerModule.forRoot({
-      skipIf: () => process.env.IP_RESTRICTION_ENABLED !== 'true',
-      throttlers: [{ ttl: RATE_LIMIT_WINDOW_MS, limit: RATE_LIMIT_MAX }],
+    ThrottlerModule.forRootAsync({
+      imports: [RateLimitingModule],
+      inject: [TypeOrmThrottlerStorage],
+      useFactory: (storage: TypeOrmThrottlerStorage) => ({
+        storage,
+        skipIf: () => process.env.IP_RESTRICTION_ENABLED === 'false',
+        throttlers: [
+          {
+            ttl: RATE_LIMIT_WINDOW_MS,
+            limit: RATE_LIMIT_MAX,
+            blockDuration: 0,
+          },
+        ],
+      }),
     }),
     UserAccountsModule, //все модули должны быть заимпортированы в корневой модуль, либо напрямую, либо по цепочке (через другие модули)
     TestingModule,

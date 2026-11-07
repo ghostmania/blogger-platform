@@ -2,6 +2,8 @@
 
 [Запуск PostgreSQL, миграция DAL и проверки](docs/typeorm-users.md).
 
+[Следующий этап: auth, IP restrictions, devices и testing](docs/typeorm-auth-devices.md).
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
 </p>

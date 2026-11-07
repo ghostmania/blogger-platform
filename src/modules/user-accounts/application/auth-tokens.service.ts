@@ -31,10 +31,16 @@ export class AuthTokensService {
     return this.accessTokenContext.sign({ id: userId });
   }
 
-  createRefreshToken(userId: string, deviceId: string): IssuedRefreshToken {
+  createRefreshToken(
+    userId: string,
+    deviceId: string,
+    previousLastActiveDate?: Date,
+  ): IssuedRefreshToken {
     //lastActiveDate кладём в payload явно (не полагаемся на iat): у iat точность
     //до секунды, и два рефреша внутри одной секунды дали бы одинаковый токен
-    const lastActiveDate = new Date();
+    const lastActiveDate = new Date(
+      Math.max(Date.now(), (previousLastActiveDate?.getTime() ?? 0) + 1),
+    );
 
     const token = this.refreshTokenContext.sign({
       id: userId,

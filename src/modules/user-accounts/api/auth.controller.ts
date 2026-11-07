@@ -104,7 +104,14 @@ export class AuthController {
     const { accessToken, refreshToken } = await this.commandBus.execute<
       RefreshTokenCommand,
       RefreshTokenResult
-    >(new RefreshTokenCommand(session.id, session.deviceId, ip));
+    >(
+      new RefreshTokenCommand(
+        session.id,
+        session.deviceId,
+        ip,
+        session.lastActiveDate,
+      ),
+    );
 
     //предъявленный refresh-токен после этого отозван — работает только новый
     setRefreshTokenCookie(response, refreshToken);
