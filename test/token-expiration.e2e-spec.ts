@@ -1,6 +1,4 @@
 import { JwtService } from '@nestjs/jwt';
-import { ACCESS_TOKEN_SECRET } from '../src/modules/user-accounts/constants/auth.constants';
-import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../src/modules/user-accounts/constants/auth-tokens.inject-constants';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { UsersTestManager } from './helpers/users-test-manager';
@@ -24,15 +22,8 @@ describe('token expiration', () => {
   beforeAll(async () => {
     const result = await initSettings(
       'nest-bloggers-platform-test-ttl',
-      (builder) =>
-        builder
-          .overrideProvider(ACCESS_TOKEN_STRATEGY_INJECT_TOKEN)
-          .useValue(
-            new JwtService({
-              secret: ACCESS_TOKEN_SECRET,
-              signOptions: { expiresIn: '1s' },
-            }),
-          ),
+      undefined,
+      true,
     );
     app = result.app;
     userTestManger = result.userTestManger;
@@ -44,20 +35,40 @@ describe('token expiration', () => {
     await app.close();
   });
 
-  it('should reject an access token after a short test-only TTL', async () => {
-    const { accessToken } = await userTestManger.loginWithTokens(
+  it('issues 10s access / 20s refresh and allows refresh after access expires', async () => {
+    const { accessToken, refreshToken } = await userTestManger.loginWithTokens(
       userInput.login,
       userInput.password,
     );
 
     await userTestManger.me(accessToken);
 
-    await delay(1_100);
+    const jwt = new JwtService();
+    const accessPayload = jwt.decode(accessToken) as {
+      exp: number;
+      iat: number;
+    };
+    const refreshPayload = jwt.decode(refreshToken) as {
+      exp: number;
+      iat: number;
+    };
+    expect(accessPayload.exp - accessPayload.iat).toBe(10);
+    expect(refreshPayload.exp - refreshPayload.iat).toBe(20);
+    await delay(10_500);
 
     await request(app.getHttpServer())
       .get(`/auth/me`)
       .auth(accessToken, { type: 'bearer' })
       .expect(HttpStatus.UNAUTHORIZED);
+    const refreshed = await request(app.getHttpServer())
+      .post('/auth/refresh-token')
+      .set('Cookie', refreshTokenCookie(refreshToken))
+      .expect(HttpStatus.OK);
+    const renewedPayload = jwt.decode(refreshed.body.accessToken) as {
+      exp: number;
+      iat: number;
+    };
+    expect(renewedPayload.exp - renewedPayload.iat).toBe(10);
   }, 40_000);
 
   it('should reject a refresh token after a 20 sec delay', async () => {

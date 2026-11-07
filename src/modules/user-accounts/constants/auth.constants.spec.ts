@@ -1,23 +1,29 @@
 import { JwtService } from '@nestjs/jwt';
 
-describe('assignment auth defaults', () => {
-  it('issues access tokens valid for at least five minutes by default', () => {
-    const previous = process.env.ACCESS_TOKEN_TTL;
-    delete process.env.ACCESS_TOKEN_TTL;
-    try {
-      jest.isolateModules(() => {
-        const { ACCESS_TOKEN_EXPIRES_IN } = require('./auth.constants');
-        const jwt = new JwtService({ secret: 'test-only' });
-        const token = jwt.sign(
-          { userId: '1' },
-          { expiresIn: ACCESS_TOKEN_EXPIRES_IN },
-        );
-        const payload = jwt.decode(token) as { exp: number; iat: number };
-        expect(payload.exp - payload.iat).toBeGreaterThanOrEqual(300);
-      });
-    } finally {
-      if (previous === undefined) delete process.env.ACCESS_TOKEN_TTL;
-      else process.env.ACCESS_TOKEN_TTL = previous;
-    }
-  });
+describe('second assignment block auth defaults', () => {
+  it.each([
+    ['ACCESS_TOKEN_TTL', 'ACCESS_TOKEN_EXPIRES_IN', 10],
+    ['REFRESH_TOKEN_TTL', 'REFRESH_TOKEN_EXPIRES_IN', 20],
+  ])(
+    'issues tokens with the required lifetime for %s',
+    (envKey, constant, seconds) => {
+      const previous = process.env[envKey];
+      delete process.env[envKey];
+      try {
+        jest.isolateModules(() => {
+          const constants = require('./auth.constants');
+          const jwt = new JwtService({ secret: 'test-only' });
+          const token = jwt.sign(
+            { userId: '1' },
+            { expiresIn: constants[constant] },
+          );
+          const payload = jwt.decode(token) as { exp: number; iat: number };
+          expect(payload.exp - payload.iat).toBe(seconds);
+        });
+      } finally {
+        if (previous === undefined) delete process.env[envKey];
+        else process.env[envKey] = previous;
+      }
+    },
+  );
 });

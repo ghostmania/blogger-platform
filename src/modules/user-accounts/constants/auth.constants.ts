@@ -8,9 +8,9 @@ type TokenExpiresIn = JwtSignOptions['expiresIn'];
 export const ACCESS_TOKEN_SECRET =
   process.env.JWT_SECRET ?? 'access-token-secret';
 
-//Первый блок автопроверки требует access token не короче пяти минут.
+//Второй блок автопроверки: access 10 секунд, refresh 20 секунд.
 export const ACCESS_TOKEN_EXPIRES_IN = (process.env.ACCESS_TOKEN_TTL ||
-  '5m') as TokenExpiresIn;
+  '10s') as TokenExpiresIn;
 
 export const REFRESH_TOKEN_SECRET =
   process.env.JWT_REFRESH_SECRET ?? 'refresh-token-secret';
