@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CommentsSqlRepository } from '../../sql/comments.sql-repository';
-import { PostsSqlQueryRepository } from '../../../posts/infrastructure/sql/query/posts.sql-query-repository';
+import { PostsTypeOrmQueryRepository } from '../../../posts/infrastructure/typeorm/query/posts.typeorm-query-repository';
 import { CreateCommentInputDto } from '../../api/input-dto/create-comment.input-dto';
 import { UsersExternalQueryRepository } from '../../../../user-accounts/infrastructure/external-query/users.external-query-repository';
 
@@ -19,7 +19,7 @@ export class CreateCommentUseCase implements ICommandHandler<
 > {
   constructor(
     private commentsRepository: CommentsSqlRepository,
-    private postsRepository: PostsSqlQueryRepository,
+    private postsRepository: PostsTypeOrmQueryRepository,
     private usersExternalQueryRepository: UsersExternalQueryRepository,
   ) {}
 

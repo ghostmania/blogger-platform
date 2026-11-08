@@ -4,6 +4,8 @@
 
 [Следующий этап: auth, IP restrictions, devices и testing](docs/typeorm-auth-devices.md).
 
+[Текущий этап: блоги и посты на TypeORM, TTL 5m, IP restriction выключен](docs/typeorm-blogs-posts.md).
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
 </p>

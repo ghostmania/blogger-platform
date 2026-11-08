@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateBlogInputDto } from '../../api/input-dto/create-blog.input-dto';
-import { BlogsSqlRepository } from '../../infrastructure/sql/blogs.sql-repository';
+import { BlogsTypeOrmRepository } from '../../infrastructure/typeorm/blogs.typeorm-repository';
 
 export class CreateBlogCommand {
   constructor(public dto: CreateBlogInputDto) {}
@@ -11,9 +11,7 @@ export class CreateBlogUseCase implements ICommandHandler<
   CreateBlogCommand,
   string
 > {
-  constructor(
-    private blogsRepository: BlogsSqlRepository,
-  ) {}
+  constructor(private blogsRepository: BlogsTypeOrmRepository) {}
 
   async execute({ dto }: CreateBlogCommand): Promise<string> {
     const blog = this.blogsRepository.createInstance({
@@ -22,14 +20,7 @@ export class CreateBlogUseCase implements ICommandHandler<
       websiteUrl: dto.websiteUrl,
     });
 
-    try {
-      await this.blogsRepository.save(blog);
-    } catch (error: unknown) {
-      //страховка от гонки: два параллельных запроса могли пройти пре-чек
-      //уникальности, но уникальный индекс пропустит только одного
-      // this.throwIfDuplicateKeyError(error);
-      throw error;
-    }
+    await this.blogsRepository.save(blog);
 
     return blog.id;
   }

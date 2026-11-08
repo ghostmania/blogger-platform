@@ -112,7 +112,7 @@ describe('TypeORM users assignment', () => {
     expect(app.get(DataSource).options.synchronize).toBe(false);
   });
 
-  it('registers and logs in without IP restriction; access token lasts exactly 10 seconds', async () => {
+  it('registers and logs in without IP restriction; access token lasts at least 5 minutes', async () => {
     for (let n = 0; n < 7; n++) {
       await request(app.getHttpServer())
         .post('/auth/registration')
@@ -131,7 +131,7 @@ describe('TypeORM users assignment', () => {
       exp: number;
       iat: number;
     };
-    expect(payload.exp - payload.iat).toBe(10);
+    expect(payload.exp - payload.iat).toBeGreaterThanOrEqual(300);
     await request(app.getHttpServer())
       .get('/auth/me')
       .auth(accessToken, { type: 'bearer' })

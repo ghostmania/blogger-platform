@@ -22,6 +22,8 @@ import {
 } from './modules/user-accounts/constants/auth.constants';
 import { SadminModule } from './modules/super-admin/sadmin.module';
 import { BloggersPlatformModule } from './modules/bloggers-platform/bloggers-platform.module';
+import { Blog } from './modules/bloggers-platform/blogs/domain/blog.entity';
+import { Post } from './modules/bloggers-platform/posts/domain/post.entity';
 
 @Module({
   imports: [
@@ -31,18 +33,20 @@ import { BloggersPlatformModule } from './modules/bloggers-platform/bloggers-pla
       useFactory: () => ({
         type: 'postgres',
         ...postgresOptions(),
-        entities: [User, DeviceSession, IpRestriction],
+        entities: [User, DeviceSession, IpRestriction, Blog, Post],
         synchronize: false,
       }),
     }),
     //ip-restriction: ThrottlerModule глобальный, но ThrottlerGuard навешивается
-    //точечно на auth-эндпоинты — остальное API не ограничиваем
+    //точечно на auth-эндпоинты — остальное API не ограничиваем.
+    //По умолчанию ВЫКЛЮЧЕН (требование этапа TypeORM blogs/posts):
+    //включается только явным IP_RESTRICTION_ENABLED=true
     ThrottlerModule.forRootAsync({
       imports: [RateLimitingModule],
       inject: [TypeOrmThrottlerStorage],
       useFactory: (storage: TypeOrmThrottlerStorage) => ({
         storage,
-        skipIf: () => process.env.IP_RESTRICTION_ENABLED === 'false',
+        skipIf: () => process.env.IP_RESTRICTION_ENABLED !== 'true',
         throttlers: [
           {
             ttl: RATE_LIMIT_WINDOW_MS,

@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PostsSqlQueryRepository } from '../../infrastructure/sql/query/posts.sql-query-repository';
+import { PostsTypeOrmQueryRepository } from '../../infrastructure/typeorm/query/posts.typeorm-query-repository';
 import { LikesSqlRepository } from '../../../likes/likes.sql-repository';
 import { LikeStatus } from '../../../enums/like-status.enum';
 import { UsersExternalQueryRepository } from '../../../../user-accounts/infrastructure/external-query/users.external-query-repository';
@@ -18,7 +18,7 @@ export class UpdatePostLikeStatusUseCase implements ICommandHandler<
   void
 > {
   constructor(
-    private readonly targets: PostsSqlQueryRepository,
+    private readonly targets: PostsTypeOrmQueryRepository,
     private readonly likes: LikesSqlRepository,
     private readonly users: UsersExternalQueryRepository,
   ) {}

@@ -1,3 +1,4 @@
+import './helpers/short-token-ttl';
 import { JwtService } from '@nestjs/jwt';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import request from 'supertest';
@@ -7,8 +8,9 @@ import { deleteAllData } from './helpers/delete-all-data';
 import { refreshTokenCookie } from './helpers/cookies';
 import { delay } from './helpers/delay';
 
-//проверяем именно то, на чём падали автотесты инкубатора:
-//access должен протухнуть после паузы в 10 сек, refresh — после 20
+//проверяем именно то, на чём падали автотесты инкубатора во втором блоке auth:
+//access должен протухнуть после паузы в 10 сек, refresh — после 20.
+//Дефолт приложения теперь 5m — короткие TTL задаёт helpers/short-token-ttl (первый import)
 describe('token expiration', () => {
   let app: INestApplication;
   let userTestManger: UsersTestManager;

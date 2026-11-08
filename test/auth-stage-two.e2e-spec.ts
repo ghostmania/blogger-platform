@@ -121,10 +121,10 @@ describe('Auth stage two and testing reset', () => {
       .expect(401);
   });
 
-  it('enables restrictions by default when no environment override exists', async () => {
+  it('disables restrictions by default when no environment override exists', async () => {
+    //дефолт этапа TypeORM blogs/posts: лимит выключен, пока не задан IP_RESTRICTION_ENABLED=true
     delete process.env.IP_RESTRICTION_ENABLED;
-    for (let i = 0; i < 5; i++) await attempt().expect(401);
-    await attempt().expect(429);
+    for (let i = 0; i < 6; i++) await attempt().expect(401);
     process.env.IP_RESTRICTION_ENABLED = 'true';
   });
 

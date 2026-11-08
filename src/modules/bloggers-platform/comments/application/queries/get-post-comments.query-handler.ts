@@ -1,6 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { CommentsSqlQueryRepository } from '../../sql/query/comments.sql-query-repository';
-import { PostsSqlQueryRepository } from '../../../posts/infrastructure/sql/query/posts.sql-query-repository';
+import { PostsTypeOrmQueryRepository } from '../../../posts/infrastructure/typeorm/query/posts.typeorm-query-repository';
 import { GetCommentsQueryParams } from '../../api/input-dto/get-comments-query-params.input-dto';
 import { CommentViewDto } from '../../api/view-dto/comments.view-dto';
 import { PaginatedViewDto } from '../../../../../core/dto/base.paginated.view-dto';
@@ -20,7 +20,7 @@ export class GetPostCommentsQueryHandler implements IQueryHandler<
 > {
   constructor(
     private commentsQueryRepository: CommentsSqlQueryRepository,
-    private postsQueryRepository: PostsSqlQueryRepository,
+    private postsQueryRepository: PostsTypeOrmQueryRepository,
   ) {}
 
   async execute({

@@ -8,9 +8,10 @@ type TokenExpiresIn = JwtSignOptions['expiresIn'];
 export const ACCESS_TOKEN_SECRET =
   process.env.JWT_SECRET ?? 'access-token-secret';
 
-//Второй блок автопроверки: access 10 секунд, refresh 20 секунд.
+//Этап TypeORM blogs/posts: access-токен должен жить не меньше 5 минут
+//(10s/20s второго блока auth задаются в тестах истечения токенов через env).
 export const ACCESS_TOKEN_EXPIRES_IN = (process.env.ACCESS_TOKEN_TTL ||
-  '10s') as TokenExpiresIn;
+  '5m') as TokenExpiresIn;
 
 export const REFRESH_TOKEN_SECRET =
   process.env.JWT_REFRESH_SECRET ?? 'refresh-token-secret';

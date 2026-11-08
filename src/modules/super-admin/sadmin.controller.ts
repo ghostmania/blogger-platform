@@ -12,11 +12,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiBasicAuth, ApiParam } from '@nestjs/swagger';
 import { PaginatedViewDto } from '../../core/dto/base.paginated.view-dto';
 import { GetUsersQueryParams } from '../user-accounts/api/input-dto/get-users-query-params.input-dto';
 import { UserViewDto } from '../user-accounts/api/view-dto/users.view-dto';
 import { GetUsersQuery } from '../user-accounts/application/queries/get-users.query-handler';
-import { ApiBasicAuth, ApiParam } from '@nestjs/swagger';
 import { DeleteUserCommand } from '../user-accounts/application/usecases/delete-user.usecase';
 import { CreateUserInputDto } from '../user-accounts/api/input-dto/users.input-dto';
 import { GetUserByIdQuery } from '../user-accounts/application/queries/get-user-by-id.query-handler';
@@ -35,11 +35,13 @@ import { GetBlogPostsQuery } from '../bloggers-platform/blogs/application/querie
 import { CreatePostForBlogInputDto } from '../bloggers-platform/posts/api/input-dto/create-post-for-blog.input-dto';
 import { GetPostsQueryParams } from '../bloggers-platform/posts/api/input-dto/get-posts-query-params.input-dto';
 import { UpdatePostForBlogInputDto } from '../bloggers-platform/posts/api/input-dto/update-post-for-blog.input-dto';
-import {
-  AdminBlogPostsService,
-  AdminPostView,
-} from './admin-blog-posts.service';
+import { PostViewDto } from '../bloggers-platform/posts/api/view-dto/posts.view-dto';
+import { GetPostByIdQuery } from '../bloggers-platform/posts/application/queries/get-post-by-id.query-handler';
+import { CreatePostForBlogCommand } from '../bloggers-platform/posts/application/usecases/create-post-for-blog.usecase';
+import { UpdatePostForBlogCommand } from '../bloggers-platform/posts/application/usecases/update-post-for-blog.usecase';
+import { DeletePostForBlogCommand } from '../bloggers-platform/posts/application/usecases/delete-post-for-blog.usecase';
 
+//все эндпоинты суперадмина — под basic auth (admin:qwerty)
 @Controller('sa')
 @UseGuards(BasicAuthGuard)
 @ApiBasicAuth('basicAuth')
@@ -47,8 +49,9 @@ export class SadminController {
   constructor(
     private queryBus: QueryBus,
     private commandBus: CommandBus,
-    private readonly adminBlogPostsService: AdminBlogPostsService,
   ) {}
+
+  // ---------- users ----------
 
   @Get('users')
   async getAll(
@@ -75,20 +78,21 @@ export class SadminController {
     return this.queryBus.execute(new GetUserByIdQuery(userId));
   }
 
-  // create blog as admin
-  @Post('blogs')
-  async createBlog(@Body() body: CreateBlogInputDto): Promise<BlogViewDto> {
-    const blogId = await this.commandBus.execute<CreateBlogCommand, string>(
-      new CreateBlogCommand(body),
-    );
-    return this.queryBus.execute(new GetBlogByIdQuery(blogId));
-  }
+  // ---------- blogs ----------
 
   @Get('blogs')
   async getAllBlogs(
     @Query() query: GetBlogsQueryParams,
   ): Promise<PaginatedViewDto<BlogViewDto[]>> {
     return this.queryBus.execute(new GetBlogsQuery(query));
+  }
+
+  @Post('blogs')
+  async createBlog(@Body() body: CreateBlogInputDto): Promise<BlogViewDto> {
+    const blogId = await this.commandBus.execute<CreateBlogCommand, string>(
+      new CreateBlogCommand(body),
+    );
+    return this.queryBus.execute(new GetBlogByIdQuery(blogId));
   }
 
   @ApiParam({ name: 'id' })
@@ -108,20 +112,27 @@ export class SadminController {
     return this.commandBus.execute(new DeleteBlogCommand(id));
   }
 
-  @Post('blogs/:blogId/posts')
-  async createBlogPost(
-    @Param('blogId') blogId: string,
-    @Body() body: CreatePostForBlogInputDto,
-  ): Promise<AdminPostView> {
-    return this.adminBlogPostsService.create(blogId, body);
-  }
+  // ---------- posts of a blog ----------
 
   @Get('blogs/:blogId/posts')
   async getBlogPosts(
     @Param('blogId') blogId: string,
     @Query() query: GetPostsQueryParams,
-  ): Promise<PaginatedViewDto<AdminPostView[]>> {
+  ): Promise<PaginatedViewDto<PostViewDto[]>> {
     return this.queryBus.execute(new GetBlogPostsQuery(blogId, query));
+  }
+
+  @Post('blogs/:blogId/posts')
+  async createBlogPost(
+    @Param('blogId') blogId: string,
+    @Body() body: CreatePostForBlogInputDto,
+  ): Promise<PostViewDto> {
+    const postId = await this.commandBus.execute<
+      CreatePostForBlogCommand,
+      string
+    >(new CreatePostForBlogCommand(blogId, body));
+
+    return this.queryBus.execute(new GetPostByIdQuery(postId));
   }
 
   @Put('blogs/:blogId/posts/:postId')
@@ -131,7 +142,9 @@ export class SadminController {
     @Param('postId') postId: string,
     @Body() body: UpdatePostForBlogInputDto,
   ): Promise<void> {
-    return this.adminBlogPostsService.update(blogId, postId, body);
+    return this.commandBus.execute(
+      new UpdatePostForBlogCommand(blogId, postId, body),
+    );
   }
 
   @Delete('blogs/:blogId/posts/:postId')
@@ -140,6 +153,8 @@ export class SadminController {
     @Param('blogId') blogId: string,
     @Param('postId') postId: string,
   ): Promise<void> {
-    return this.adminBlogPostsService.delete(blogId, postId);
+    return this.commandBus.execute(
+      new DeletePostForBlogCommand(blogId, postId),
+    );
   }
 }

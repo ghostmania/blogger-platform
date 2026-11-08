@@ -11,6 +11,4 @@ pg_ctl -D "$cluster_dir/data" -l "$cluster_dir/server.log" -o "-h '' -k $cluster
 cd "$project_dir"
 export TEST_DATABASE_URL="postgresql://postgres@localhost/postgres?host=$cluster_dir&port=55440"
 export TEST_DATABASE_SSL=false
-export ACCESS_TOKEN_TTL=10s
-export REFRESH_TOKEN_TTL=20s
 node_modules/.bin/jest --config test/jest-e2e.json --runInBand "$@"

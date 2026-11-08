@@ -1,11 +1,9 @@
 import { Module } from '@nestjs/common';
 import { SadminController } from './sadmin.controller';
-import { AdminBlogPostsService } from './admin-blog-posts.service';
-// import { TestingController } from './testing.controller';
 
+//контроллер только диспатчит команды/запросы: их обработчики живут в
+//UserAccountsModule и BloggersPlatformModule, а CqrsModule подключён глобально
 @Module({
-  imports: [],
   controllers: [SadminController],
-  providers: [AdminBlogPostsService],
 })
 export class SadminModule {}

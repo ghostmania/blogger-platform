@@ -4,6 +4,8 @@ import { Test } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from '../src/modules/user-accounts/domain/user.entity';
+import { Blog } from '../src/modules/bloggers-platform/blogs/domain/blog.entity';
+import { Post } from '../src/modules/bloggers-platform/posts/domain/post.entity';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import request from 'supertest';
 import { BloggersPlatformModule } from '../src/modules/bloggers-platform/bloggers-platform.module';
@@ -17,10 +19,12 @@ import { pipesSetup } from '../src/setup/pipes.setup';
 
 // Exercise the real module, JWT guard, validation, CQRS handlers and SQL
 // repositories; database boundaries and user lookup are substituted.
+// Posts are read through TypeORM now, so the Post repository is mocked too.
 describe('Create comment HTTP flow', () => {
   let app: INestApplication;
   let token: string;
   const pool = { query: jest.fn(), end: jest.fn() };
+  const posts = { findOneBy: jest.fn() };
   const users = { getByIdOrNotFoundFail: jest.fn() };
   const content = 'A comment long enough to be valid';
   const createdAt = new Date('2026-01-01T00:00:00.000Z');
@@ -35,6 +39,10 @@ describe('Create comment HTTP flow', () => {
       .useValue({})
       .overrideProvider(getRepositoryToken(User))
       .useValue({})
+      .overrideProvider(getRepositoryToken(Blog))
+      .useValue({})
+      .overrideProvider(getRepositoryToken(Post))
+      .useValue(posts)
       .overrideProvider(PG_POOL)
       .useValue(pool)
       .overrideProvider(UsersExternalQueryRepository)
@@ -56,10 +64,20 @@ describe('Create comment HTTP flow', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     users.getByIdOrNotFoundFail.mockResolvedValue({ id: '7', login: 'author' });
+    posts.findOneBy.mockImplementation(async ({ id }: { id: string }) =>
+      id === '1'
+        ? {
+            id: '1',
+            title: 'Post',
+            shortDescription: 'Short',
+            content: 'Body',
+            blogId: '1',
+            blogName: 'Blog',
+            createdAt,
+          }
+        : null,
+    );
     pool.query.mockImplementation(async (sql: string, values: unknown[]) => {
-      if (sql.includes('FROM posts')) {
-        return { rows: values[0] === '1' ? [{ id: '1' }] : [] };
-      }
       if (sql.includes('INSERT INTO comments')) return { rows: [{ id: '12' }] };
       if (sql.includes('FROM comments'))
         return {

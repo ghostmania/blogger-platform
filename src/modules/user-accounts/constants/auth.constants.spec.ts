@@ -1,8 +1,8 @@
 import { JwtService } from '@nestjs/jwt';
 
-describe('second assignment block auth defaults', () => {
+describe('auth token defaults (TypeORM blogs/posts stage)', () => {
   it.each([
-    ['ACCESS_TOKEN_TTL', 'ACCESS_TOKEN_EXPIRES_IN', 10],
+    ['ACCESS_TOKEN_TTL', 'ACCESS_TOKEN_EXPIRES_IN', 300],
     ['REFRESH_TOKEN_TTL', 'REFRESH_TOKEN_EXPIRES_IN', 20],
   ])(
     'issues tokens with the required lifetime for %s',

@@ -13,9 +13,9 @@
   "testTimeout": 30000,
   "testPathIgnorePatterns": [
     "/node_modules/",
-    "blogs.e2e-spec.ts$",
-    "posts.e2e-spec.ts$",
-    "comments.e2e-spec.ts$",
-    "app.e2e-spec.ts$"
+    "/blogs.e2e-spec.ts$",
+    "/posts.e2e-spec.ts$",
+    "/comments.e2e-spec.ts$",
+    "/app.e2e-spec.ts$"
   ]
 }

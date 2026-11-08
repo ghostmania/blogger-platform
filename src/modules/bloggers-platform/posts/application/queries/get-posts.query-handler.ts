@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { PostsSqlQueryRepository } from '../../infrastructure/sql/query/posts.sql-query-repository';
+import { PostsTypeOrmQueryRepository } from '../../infrastructure/typeorm/query/posts.typeorm-query-repository';
 import { GetPostsQueryParams } from '../../api/input-dto/get-posts-query-params.input-dto';
 import { PostViewDto } from '../../api/view-dto/posts.view-dto';
 import { PaginatedViewDto } from '../../../../../core/dto/base.paginated.view-dto';
@@ -7,7 +7,8 @@ import { PaginatedViewDto } from '../../../../../core/dto/base.paginated.view-dt
 export class GetPostsQuery {
   constructor(
     public queryParams: GetPostsQueryParams,
-    public userId: string | null,
+    //userId понадобится для myStatus, когда лайки переедут на TypeORM
+    public userId: string | null = null,
   ) {}
 }
 
@@ -16,12 +17,11 @@ export class GetPostsQueryHandler implements IQueryHandler<
   GetPostsQuery,
   PaginatedViewDto<PostViewDto[]>
 > {
-  constructor(private postsQueryRepository: PostsSqlQueryRepository) {}
+  constructor(private postsQueryRepository: PostsTypeOrmQueryRepository) {}
 
   async execute({
     queryParams,
-    userId,
   }: GetPostsQuery): Promise<PaginatedViewDto<PostViewDto[]>> {
-    return this.postsQueryRepository.getAll(queryParams, undefined, userId);
+    return this.postsQueryRepository.getAll(queryParams);
   }
 }
