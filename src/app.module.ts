@@ -7,7 +7,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserAccountsModule } from './modules/user-accounts/user-accounts.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { postgresOptions } from './core/database/postgres-options';
+import { poolOptions, postgresOptions } from './core/database/postgres-options';
 import { User } from './modules/user-accounts/domain/user.entity';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TestingModule } from './modules/testing/testing.module';
@@ -35,6 +35,8 @@ import { Post } from './modules/bloggers-platform/posts/domain/post.entity';
         ...postgresOptions(),
         entities: [User, DeviceSession, IpRestriction, Blog, Post],
         synchronize: false,
+        //настройки pg Pool внутри TypeORM — те же, что у PG_POOL
+        extra: poolOptions,
       }),
     }),
     //ip-restriction: ThrottlerModule глобальный, но ThrottlerGuard навешивается

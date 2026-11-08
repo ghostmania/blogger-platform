@@ -1,4 +1,4 @@
-import { postgresOptions } from './postgres-options';
+import { poolOptions, postgresOptions } from './postgres-options';
 import { Global, Inject, Module, OnModuleDestroy } from '@nestjs/common';
 import { Pool } from 'pg';
 import { PG_POOL } from './database.constants';
@@ -14,7 +14,7 @@ import { PG_POOL } from './database.constants';
         return new Pool({
           connectionString: url,
           ssl,
-          max: 10,
+          ...poolOptions,
         });
       },
     },

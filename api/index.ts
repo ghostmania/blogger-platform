@@ -30,7 +30,12 @@ export default async function handler(
   res: ServerResponse,
 ) {
   if (!cachedServer) {
-    cachedServer = bootstrapServer();
+    //упавший bootstrap не должен залипать в кеше: иначе каждый следующий
+    //запрос этого контейнера падал бы с той же ошибкой без попытки подняться
+    cachedServer = bootstrapServer().catch((error: unknown) => {
+      cachedServer = null;
+      throw error;
+    });
   }
 
   const server = await cachedServer;

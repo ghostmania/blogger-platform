@@ -54,6 +54,44 @@ CREATE TABLE IF NOT EXISTS blogs (
   updated_at    timestamptz  NOT NULL DEFAULT now()
 );
 
+-- На проде таблица blogs была создана вручную до init.sql: text вместо varchar,
+-- date вместо timestamptz (createdAt отдавался полуночью), без NOT NULL.
+-- CREATE TABLE IF NOT EXISTS такое не исправляет, поэтому приводим типы явно.
+-- Блок идемпотентен: ALTER выполняется только для колонок со старым типом.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = current_schema() AND table_name = 'blogs'
+               AND column_name = 'created_at' AND data_type = 'date') THEN
+    ALTER TABLE blogs
+      ALTER COLUMN created_at TYPE timestamptz USING created_at::timestamptz,
+      ALTER COLUMN updated_at TYPE timestamptz USING updated_at::timestamptz;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = current_schema() AND table_name = 'blogs'
+               AND column_name = 'name' AND data_type = 'text') THEN
+    ALTER TABLE blogs
+      ALTER COLUMN name        TYPE varchar(15),
+      ALTER COLUMN description TYPE varchar(500),
+      ALTER COLUMN website_url TYPE varchar(100);
+  END IF;
+END $$;
+
+UPDATE blogs SET is_membership = false WHERE is_membership IS NULL;
+UPDATE blogs SET created_at = now() WHERE created_at IS NULL;
+UPDATE blogs SET updated_at = created_at WHERE updated_at IS NULL;
+
+ALTER TABLE blogs
+  ALTER COLUMN name          SET NOT NULL,
+  ALTER COLUMN description   SET NOT NULL,
+  ALTER COLUMN website_url   SET NOT NULL,
+  ALTER COLUMN is_membership SET DEFAULT false,
+  ALTER COLUMN is_membership SET NOT NULL,
+  ALTER COLUMN created_at    SET DEFAULT now(),
+  ALTER COLUMN created_at    SET NOT NULL,
+  ALTER COLUMN updated_at    SET DEFAULT now(),
+  ALTER COLUMN updated_at    SET NOT NULL;
+
 CREATE TABLE IF NOT EXISTS posts (
   id                bigserial     PRIMARY KEY,
   title             varchar(30)   NOT NULL,
