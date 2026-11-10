@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { CommentsSqlRepository } from '../../sql/comments.sql-repository';
+import { CommentsTypeOrmRepository } from '../../infrastructure/typeorm/comments.typeorm-repository';
 import { DomainException } from '../../../../../core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from '../../../../../core/exceptions/domain-exception-codes';
 
@@ -15,19 +15,20 @@ export class DeleteCommentUseCase implements ICommandHandler<
   DeleteCommentCommand,
   void
 > {
-  constructor(private commentsRepository: CommentsSqlRepository) {}
+  constructor(private commentsRepository: CommentsTypeOrmRepository) {}
 
   async execute({ commentId, userId }: DeleteCommentCommand): Promise<void> {
     const comment = await this.commentsRepository.findOrNotFoundFail(commentId);
 
     //чужой комментарий удалять нельзя -> 403
-    if (comment.user_id !== userId) {
+    if (!comment.isAuthoredBy(userId)) {
       throw new DomainException({
         code: DomainExceptionCode.Forbidden,
         message: 'comment belongs to another user',
       });
     }
 
-    await this.commentsRepository.deleteById(commentId, userId);
+    //реакции на комментарий удаляются каскадом в БД
+    await this.commentsRepository.delete(comment);
   }
 }

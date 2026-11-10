@@ -4,6 +4,7 @@ import { UserAccountsModule } from '../user-accounts/user-accounts.module';
 
 import { Blog } from './blogs/domain/blog.entity';
 import { Post } from './posts/domain/post.entity';
+import { Comment } from './comments/domain/comment.entity';
 
 import { BlogsController } from './blogs/api/blogs.controller';
 import { PostsController } from './posts/api/posts.controller';
@@ -13,8 +14,8 @@ import { BlogsTypeOrmRepository } from './blogs/infrastructure/typeorm/blogs.typ
 import { BlogsTypeOrmQueryRepository } from './blogs/infrastructure/typeorm/query/blogs.typeorm-query-repository';
 import { PostsTypeOrmRepository } from './posts/infrastructure/typeorm/posts.typeorm-repository';
 import { PostsTypeOrmQueryRepository } from './posts/infrastructure/typeorm/query/posts.typeorm-query-repository';
-import { CommentsSqlRepository } from './comments/sql/comments.sql-repository';
-import { CommentsSqlQueryRepository } from './comments/sql/query/comments.sql-query-repository';
+import { CommentsTypeOrmRepository } from './comments/infrastructure/typeorm/comments.typeorm-repository';
+import { CommentsTypeOrmQueryRepository } from './comments/infrastructure/typeorm/query/comments.typeorm-query-repository';
 import { LikesSqlRepository } from './likes/likes.sql-repository';
 
 import { CreateBlogUseCase } from './blogs/application/usecases/create-blog.usecase';
@@ -63,20 +64,23 @@ const queryHandlers = [
   GetPostCommentsQueryHandler,
 ];
 
-//blogs и posts — на TypeORM; comments и likes пока остаются на raw SQL
+//blogs, posts и comments — на TypeORM; likes пока остаются на raw SQL
 const repositories = [
   BlogsTypeOrmRepository,
   BlogsTypeOrmQueryRepository,
   PostsTypeOrmRepository,
   PostsTypeOrmQueryRepository,
-  CommentsSqlRepository,
-  CommentsSqlQueryRepository,
+  CommentsTypeOrmRepository,
+  CommentsTypeOrmQueryRepository,
   LikesSqlRepository,
 ];
 
 //CqrsModule подключён глобально в CoreModule
 @Module({
-  imports: [TypeOrmModule.forFeature([Blog, Post]), UserAccountsModule],
+  imports: [
+    TypeOrmModule.forFeature([Blog, Post, Comment]),
+    UserAccountsModule,
+  ],
   providers: [...repositories, ...commandHandlers, ...queryHandlers],
   controllers: [BlogsController, PostsController, CommentsController],
 })

@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import request from 'supertest';
 import { initSettings } from './helpers/init-settings';
 import { deleteAllData } from './helpers/delete-all-data';
+import { Comment } from '../src/modules/bloggers-platform/comments/domain/comment.entity';
 
 //Валидный по формату, но заведомо несуществующий id — должен давать 404, а не 500
 const MISSING_ID = '9223372036854775807';
@@ -77,13 +78,23 @@ describe('TypeORM comments and reactions (public API)', () => {
       const { body: post } = await admin(
         request(server()).post(`/sa/blogs/${blog.id}/posts`),
       )
-        .send({ title: `Post ${n}`, shortDescription: 'Short', content: 'Body' })
+        .send({
+          title: `Post ${n}`,
+          shortDescription: 'Short',
+          content: 'Body',
+        })
         .expect(201);
       posts.push(post.id);
     }
   });
 
   describe('comments', () => {
+    it('maps the Comment entity onto the existing comments table with synchronize off', () => {
+      const dataSource = app.get(DataSource);
+      expect(dataSource.options.synchronize).toBe(false);
+      expect(dataSource.getMetadata(Comment).tableName).toBe('comments');
+    });
+
     it('creates a trimmed comment for the authenticated author, ignoring forged author fields', async () => {
       const { body } = await auth(
         request(server()).post(`/posts/${posts[0]}/comments`),

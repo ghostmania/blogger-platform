@@ -24,6 +24,7 @@ import { SadminModule } from './modules/super-admin/sadmin.module';
 import { BloggersPlatformModule } from './modules/bloggers-platform/bloggers-platform.module';
 import { Blog } from './modules/bloggers-platform/blogs/domain/blog.entity';
 import { Post } from './modules/bloggers-platform/posts/domain/post.entity';
+import { Comment } from './modules/bloggers-platform/comments/domain/comment.entity';
 
 @Module({
   imports: [
@@ -33,7 +34,7 @@ import { Post } from './modules/bloggers-platform/posts/domain/post.entity';
       useFactory: () => ({
         type: 'postgres',
         ...postgresOptions(),
-        entities: [User, DeviceSession, IpRestriction, Blog, Post],
+        entities: [User, DeviceSession, IpRestriction, Blog, Post, Comment],
         synchronize: false,
         //настройки pg Pool внутри TypeORM — те же, что у PG_POOL
         extra: poolOptions,
