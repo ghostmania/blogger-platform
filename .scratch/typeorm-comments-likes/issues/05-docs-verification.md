@@ -4,7 +4,7 @@
 
 **Blocked by:** 02, 03, 04
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] `yarn build` зелёный
 - [ ] Полный `yarn test:e2e:local` зелёный

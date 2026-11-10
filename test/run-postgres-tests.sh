@@ -2,8 +2,10 @@
 set -euo pipefail
 project_dir="$(cd "$(dirname "$0")/.." && pwd)"
 cluster_dir="$(mktemp -d /tmp/blogger-typeorm-pg.XXXXXX)"
+# Каталог кластера удаляем: каждый прогон оставлял десятки мегабайт в /tmp
 cleanup() {
   pg_ctl -D "$cluster_dir/data" -m immediate stop >/dev/null 2>&1 || true
+  rm -rf "$cluster_dir"
 }
 trap cleanup EXIT
 initdb -D "$cluster_dir/data" --auth=trust -U postgres >"$cluster_dir/init.log"
