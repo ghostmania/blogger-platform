@@ -6,7 +6,9 @@
 
 [Блоги и посты на TypeORM, TTL 5m, IP restriction выключен](docs/typeorm-blogs-posts.md).
 
-[Текущий этап: комментарии и реакции на TypeORM](docs/typeorm-comments-likes.md).
+[Комментарии и реакции на TypeORM](docs/typeorm-comments-likes.md).
+
+[Текущий этап: завершение миграции DAL, API по контракту, lint](docs/typeorm-final.md).
 
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
