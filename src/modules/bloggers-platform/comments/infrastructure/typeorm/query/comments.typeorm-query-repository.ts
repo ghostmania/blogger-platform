@@ -9,6 +9,7 @@ import { DomainException } from '../../../../../../core/exceptions/domain-except
 import { DomainExceptionCode } from '../../../../../../core/exceptions/domain-exception-codes';
 import { isBigintId } from '../../../../../../core/database/bigint-id';
 import { LikeStatus } from '../../../../enums/like-status.enum';
+import { CommentLike } from '../../../../likes/domain/comment-like.entity';
 import {
   resolveSortColumn,
   resolveSortDirection,
@@ -94,7 +95,7 @@ export class CommentsTypeOrmQueryRepository {
         (sub) =>
           sub
             .select('COUNT(*)')
-            .from('comment_likes', 'l')
+            .from(CommentLike, 'l')
             .where('l.comment_id = c.id AND l.status = :like'),
         'likes_count',
       )
@@ -102,7 +103,7 @@ export class CommentsTypeOrmQueryRepository {
         (sub) =>
           sub
             .select('COUNT(*)')
-            .from('comment_likes', 'l')
+            .from(CommentLike, 'l')
             .where('l.comment_id = c.id AND l.status = :dislike'),
         'dislikes_count',
       )
@@ -114,7 +115,7 @@ export class CommentsTypeOrmQueryRepository {
           (sub) =>
             sub
               .select('l.status')
-              .from('comment_likes', 'l')
+              .from(CommentLike, 'l')
               .where('l.comment_id = c.id AND l.user_id = :userId'),
           'my_status',
         )

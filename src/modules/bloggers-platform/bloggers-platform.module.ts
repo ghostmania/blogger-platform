@@ -5,6 +5,8 @@ import { UserAccountsModule } from '../user-accounts/user-accounts.module';
 import { Blog } from './blogs/domain/blog.entity';
 import { Post } from './posts/domain/post.entity';
 import { Comment } from './comments/domain/comment.entity';
+import { PostLike } from './likes/domain/post-like.entity';
+import { CommentLike } from './likes/domain/comment-like.entity';
 
 import { BlogsController } from './blogs/api/blogs.controller';
 import { PostsController } from './posts/api/posts.controller';
@@ -16,7 +18,7 @@ import { PostsTypeOrmRepository } from './posts/infrastructure/typeorm/posts.typ
 import { PostsTypeOrmQueryRepository } from './posts/infrastructure/typeorm/query/posts.typeorm-query-repository';
 import { CommentsTypeOrmRepository } from './comments/infrastructure/typeorm/comments.typeorm-repository';
 import { CommentsTypeOrmQueryRepository } from './comments/infrastructure/typeorm/query/comments.typeorm-query-repository';
-import { LikesSqlRepository } from './likes/likes.sql-repository';
+import { LikesTypeOrmRepository } from './likes/infrastructure/typeorm/likes.typeorm-repository';
 
 import { CreateBlogUseCase } from './blogs/application/usecases/create-blog.usecase';
 import { UpdateBlogUseCase } from './blogs/application/usecases/update-blog.usecase';
@@ -64,7 +66,7 @@ const queryHandlers = [
   GetPostCommentsQueryHandler,
 ];
 
-//blogs, posts и comments — на TypeORM; likes пока остаются на raw SQL
+//весь модуль на TypeORM: raw SQL здесь больше не используется
 const repositories = [
   BlogsTypeOrmRepository,
   BlogsTypeOrmQueryRepository,
@@ -72,13 +74,13 @@ const repositories = [
   PostsTypeOrmQueryRepository,
   CommentsTypeOrmRepository,
   CommentsTypeOrmQueryRepository,
-  LikesSqlRepository,
+  LikesTypeOrmRepository,
 ];
 
 //CqrsModule подключён глобально в CoreModule
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Blog, Post, Comment]),
+    TypeOrmModule.forFeature([Blog, Post, Comment, PostLike, CommentLike]),
     UserAccountsModule,
   ],
   providers: [...repositories, ...commandHandlers, ...queryHandlers],

@@ -4,6 +4,8 @@ import request from 'supertest';
 import { initSettings } from './helpers/init-settings';
 import { deleteAllData } from './helpers/delete-all-data';
 import { Comment } from '../src/modules/bloggers-platform/comments/domain/comment.entity';
+import { PostLike } from '../src/modules/bloggers-platform/likes/domain/post-like.entity';
+import { CommentLike } from '../src/modules/bloggers-platform/likes/domain/comment-like.entity';
 
 //Валидный по формату, но заведомо несуществующий id — должен давать 404, а не 500
 const MISSING_ID = '9223372036854775807';
@@ -89,10 +91,14 @@ describe('TypeORM comments and reactions (public API)', () => {
   });
 
   describe('comments', () => {
-    it('maps the Comment entity onto the existing comments table with synchronize off', () => {
+    it('maps Comment, PostLike and CommentLike onto the existing tables with synchronize off', () => {
       const dataSource = app.get(DataSource);
       expect(dataSource.options.synchronize).toBe(false);
       expect(dataSource.getMetadata(Comment).tableName).toBe('comments');
+      expect(dataSource.getMetadata(PostLike).tableName).toBe('post_likes');
+      expect(dataSource.getMetadata(CommentLike).tableName).toBe(
+        'comment_likes',
+      );
     });
 
     it('creates a trimmed comment for the authenticated author, ignoring forged author fields', async () => {

@@ -1,8 +1,7 @@
 import { LikeStatus } from '../../../enums/like-status.enum';
 
-export class CreatePostLikeDomainDto {
-  postId: string;
+export class CreateLikeDomainDto {
+  targetId: string;
   userId: string;
-  login: string;
   status: LikeStatus;
 }

@@ -25,6 +25,8 @@ import { BloggersPlatformModule } from './modules/bloggers-platform/bloggers-pla
 import { Blog } from './modules/bloggers-platform/blogs/domain/blog.entity';
 import { Post } from './modules/bloggers-platform/posts/domain/post.entity';
 import { Comment } from './modules/bloggers-platform/comments/domain/comment.entity';
+import { PostLike } from './modules/bloggers-platform/likes/domain/post-like.entity';
+import { CommentLike } from './modules/bloggers-platform/likes/domain/comment-like.entity';
 
 @Module({
   imports: [
@@ -34,7 +36,16 @@ import { Comment } from './modules/bloggers-platform/comments/domain/comment.ent
       useFactory: () => ({
         type: 'postgres',
         ...postgresOptions(),
-        entities: [User, DeviceSession, IpRestriction, Blog, Post, Comment],
+        entities: [
+          User,
+          DeviceSession,
+          IpRestriction,
+          Blog,
+          Post,
+          Comment,
+          PostLike,
+          CommentLike,
+        ],
         synchronize: false,
         //настройки pg Pool внутри TypeORM — те же, что у PG_POOL
         extra: poolOptions,
