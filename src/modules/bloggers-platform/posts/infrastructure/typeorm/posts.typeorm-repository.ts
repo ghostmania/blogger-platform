@@ -21,6 +21,22 @@ export class PostsTypeOrmRepository {
     await this.repository.save(post);
   }
 
+  findById(id: string): Promise<Post | null> {
+    if (!isBigintId(id)) return Promise.resolve(null);
+    return this.repository.findOneBy({ id });
+  }
+
+  async findOrNotFoundFail(id: string): Promise<Post> {
+    const post = await this.findById(id);
+    if (!post) {
+      throw new DomainException({
+        code: DomainExceptionCode.NotFound,
+        message: 'Post not found',
+      });
+    }
+    return post;
+  }
+
   //пост ищем строго внутри блога из URL: чужой пост для этого блога — 404
   findInBlog(blogId: string, postId: string): Promise<Post | null> {
     if (!isBigintId(blogId) || !isBigintId(postId)) {

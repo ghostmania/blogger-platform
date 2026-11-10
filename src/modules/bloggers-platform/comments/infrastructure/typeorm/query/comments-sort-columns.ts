@@ -11,7 +11,7 @@ const SORT_DIRECTIONS: Record<SortDirection, 'ASC' | 'DESC'> = {
   [SortDirection.Desc]: 'DESC',
 };
 
-export function resolveSortColumn(sortBy: CommentsSortBy): string {
+export function resolveSortExpression(sortBy: CommentsSortBy): string {
   const column = SORT_COLUMNS[sortBy];
 
   if (!column) {

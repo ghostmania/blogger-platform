@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PostsTypeOrmQueryRepository } from '../../infrastructure/typeorm/query/posts.typeorm-query-repository';
+import { PostsTypeOrmRepository } from '../../infrastructure/typeorm/posts.typeorm-repository';
 import { LikesTypeOrmRepository } from '../../../likes/infrastructure/typeorm/likes.typeorm-repository';
 import { LikeStatus } from '../../../enums/like-status.enum';
 import { UsersExternalQueryRepository } from '../../../../user-accounts/infrastructure/external-query/users.external-query-repository';
@@ -18,7 +18,7 @@ export class UpdatePostLikeStatusUseCase implements ICommandHandler<
   void
 > {
   constructor(
-    private readonly targets: PostsTypeOrmQueryRepository,
+    private readonly posts: PostsTypeOrmRepository,
     private readonly likes: LikesTypeOrmRepository,
     private readonly users: UsersExternalQueryRepository,
   ) {}
@@ -28,7 +28,7 @@ export class UpdatePostLikeStatusUseCase implements ICommandHandler<
     userId,
     likeStatus,
   }: UpdatePostLikeStatusCommand): Promise<void> {
-    await this.targets.getByIdOrNotFoundFail(postId);
+    await this.posts.findOrNotFoundFail(postId);
     await this.users.getByIdOrNotFoundFail(userId);
     await this.likes.setStatus('post', postId, userId, likeStatus);
   }

@@ -6,5 +6,5 @@
 
 **Status:** done
 
-- [ ] `yarn build` зелёный
-- [ ] Полный `yarn test:e2e:local` зелёный
+- [x] `yarn build` зелёный
+- [x] Полный `yarn test:e2e:local` зелёный

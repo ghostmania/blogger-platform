@@ -5,8 +5,11 @@ import { Like } from '../../domain/like.entity';
 import { PostLike } from '../../domain/post-like.entity';
 import { CommentLike } from '../../domain/comment-like.entity';
 import { LikeStatus } from '../../../enums/like-status.enum';
+import { DomainException } from '../../../../../core/exceptions/domain-exceptions';
+import { DomainExceptionCode } from '../../../../../core/exceptions/domain-exception-codes';
 
 const POSTGRES_UNIQUE_VIOLATION = '23505';
+const POSTGRES_FOREIGN_KEY_VIOLATION = '23503';
 
 export type LikeTarget = 'post' | 'comment';
 
@@ -30,12 +33,18 @@ export class LikesTypeOrmRepository {
     status: LikeStatus,
   ): Promise<void> {
     if (target === 'post') {
-      return this.apply(this.postLikes, { postId: targetId, userId }, () =>
-        PostLike.createInstance({ targetId, userId, status }),
+      return this.upsert(
+        this.postLikes,
+        { postId: targetId, userId },
+        () => PostLike.createInstance({ targetId, userId, status }),
+        status,
       );
     }
-    return this.apply(this.commentLikes, { commentId: targetId, userId }, () =>
-      CommentLike.createInstance({ targetId, userId, status }),
+    return this.upsert(
+      this.commentLikes,
+      { commentId: targetId, userId },
+      () => CommentLike.createInstance({ targetId, userId, status }),
+      status,
     );
   }
 
@@ -47,32 +56,41 @@ export class LikesTypeOrmRepository {
    * найдёт строку и обработает её как обновление. Строки со статусом None
    * остаются: именно по ключу сериализуются конкурентные записи.
    */
-  private async apply<T extends Like>(
+  private async upsert<T extends Like>(
     repository: Repository<T>,
     key: FindOptionsWhere<T>,
     create: () => T,
+    status: LikeStatus,
     retried = false,
   ): Promise<void> {
     const existing = await repository.findOneBy(key);
 
     if (existing) {
-      if (existing.setStatus(create().status)) await repository.save(existing);
+      if (existing.setStatus(status)) await repository.save(existing);
       return;
     }
 
     try {
       await repository.insert(create() as never);
     } catch (error) {
-      if (retried || !this.isUniqueViolation(error)) throw error;
-      await this.apply(repository, key, create, true);
+      if (!retried && this.isViolation(error, POSTGRES_UNIQUE_VIOLATION)) {
+        return this.upsert(repository, key, create, status, true);
+      }
+      //цель удалили между проверкой существования и вставкой — это 404, не 500
+      if (this.isViolation(error, POSTGRES_FOREIGN_KEY_VIOLATION)) {
+        throw new DomainException({
+          code: DomainExceptionCode.NotFound,
+          message: 'Reaction target not found',
+        });
+      }
+      throw error;
     }
   }
 
-  private isUniqueViolation(error: unknown): boolean {
+  private isViolation(error: unknown, code: string): boolean {
     return (
       error instanceof QueryFailedError &&
-      (error.driverError as { code?: string } | undefined)?.code ===
-        POSTGRES_UNIQUE_VIOLATION
+      (error.driverError as { code?: string } | undefined)?.code === code
     );
   }
 }

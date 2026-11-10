@@ -11,7 +11,7 @@ import { isBigintId } from '../../../../../../core/database/bigint-id';
 import { LikeStatus } from '../../../../enums/like-status.enum';
 import { CommentLike } from '../../../../likes/domain/comment-like.entity';
 import {
-  resolveSortColumn,
+  resolveSortExpression,
   resolveSortDirection,
 } from './comments-sort-columns';
 
@@ -62,12 +62,13 @@ export class CommentsTypeOrmQueryRepository {
         .where('c.post_id = :postId', { postId }),
       userId,
     )
-      .orderBy(`c.${resolveSortColumn(query.sortBy)}`, direction)
+      .orderBy(resolveSortExpression(query.sortBy), direction)
       .addOrderBy('c.id', direction)
       .offset(query.calculateSkip())
       .limit(query.pageSize);
 
-    //счётчик — отдельным запросом: getManyAndCount не дружит с getRawAndEntities
+    //счётчик — отдельным запросом: getManyAndCount не дружит с getRawAndEntities.
+    //raw[i] соответствует entities[i] только без join'ов (TypeORM дедуплицирует сущности)
     const [{ entities, raw }, totalCount] = await Promise.all([
       builder.getRawAndEntities<LikesRow>(),
       this.repository.countBy({ postId }),

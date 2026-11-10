@@ -311,6 +311,38 @@ describe('TypeORM comments and reactions (public API)', () => {
         items: [],
       });
     });
+
+    //реакции мягко удалённого пользователя остаются видимыми (решение этапа)
+    it('keeps likes of a soft-deleted user in counts and newest likes', async () => {
+      const target = `/posts/${posts[0]}`;
+      await reaction(target, 'Like', 1);
+      await reaction(target, 'Like', 2);
+      await admin(request(server()).delete(`/sa/users/${users[2].id}`)).expect(
+        204,
+      );
+      const { extendedLikesInfo } = await read(target);
+      expect(extendedLikesInfo.likesCount).toBe(2);
+      expect(extendedLikesInfo.newestLikes.map((like) => like.userId)).toEqual([
+        users[2].id,
+        users[1].id,
+      ]);
+      expect(extendedLikesInfo.newestLikes[0].login).toBe(users[2].login);
+    });
+
+    it('deletes comments and reactions together with their post', async () => {
+      const { id } = await createComment();
+      await reaction(`/comments/${id}`, 'Like', 1);
+      await reaction(`/posts/${posts[0]}`, 'Like', 1);
+      const { blogId } = await read(`/posts/${posts[0]}`);
+      await admin(
+        request(server()).delete(`/sa/blogs/${blogId}/posts/${posts[0]}`),
+      ).expect(204);
+      await request(server()).get(`/comments/${id}`).expect(404);
+      await request(server()).get(`/posts/${posts[0]}/comments`).expect(404);
+      expect(await count('comments')).toBe(0);
+      expect(await count('comment_likes')).toBe(0);
+      expect(await count('post_likes')).toBe(0);
+    });
   });
 
   describe('errors and access', () => {

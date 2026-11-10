@@ -63,7 +63,8 @@ export class PostsTypeOrmQueryRepository {
       .offset(query.calculateSkip())
       .limit(query.pageSize);
 
-    //счётчик — отдельным запросом: getManyAndCount не дружит с getRawAndEntities
+    //счётчик — отдельным запросом: getManyAndCount не дружит с getRawAndEntities.
+    //raw[i] соответствует entities[i] только без join'ов (TypeORM дедуплицирует сущности)
     const [{ entities, raw }, totalCount] = await Promise.all([
       builder.getRawAndEntities<LikesRow>(),
       blogId !== undefined
@@ -100,8 +101,10 @@ export class PostsTypeOrmQueryRepository {
       });
     }
 
-    const newestLikes = await this.newestLikes([id]);
-    return this.toView(entities[0], raw[0], newestLikes.get(id) ?? []);
+    //ключ — id из сущности: в URL он мог прийти с ведущими нулями
+    const post = entities[0];
+    const newestLikes = await this.newestLikes([post.id]);
+    return this.toView(post, raw[0], newestLikes.get(post.id) ?? []);
   }
 
   /**
@@ -182,8 +185,9 @@ export class PostsTypeOrmQueryRepository {
             }),
         'ranked',
       )
-      .innerJoin(User, 'u', 'u.id = ranked.user_id')
+      //withDeleted — ДО join'а: TypeORM добавляет deleted_at IS NULL в момент join()
       .withDeleted()
+      .innerJoin(User, 'u', 'u.id = ranked.user_id')
       .where('ranked.rn <= :limit', { limit: NEWEST_LIKES_LIMIT })
       .orderBy('ranked.post_id')
       .addOrderBy('ranked.added_at', 'DESC')
