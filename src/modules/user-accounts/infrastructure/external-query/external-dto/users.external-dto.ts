@@ -1,4 +1,4 @@
-import { UserEntity } from '../../../domain/entity.contracts';
+import { User } from '../../../domain/user.entity';
 
 export class UserExternalDto {
   id: string;
@@ -8,7 +8,7 @@ export class UserExternalDto {
   firstName: string;
   lastName: string | null;
 
-  static mapToView(user: UserEntity): UserExternalDto {
+  static mapToView(user: User): UserExternalDto {
     const dto = new UserExternalDto();
 
     dto.email = user.email;

@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { UsersRepository } from '../../infrastructure/users.repository.abstract';
+import { UsersTypeOrmRepository } from '../../infrastructure/typeorm/users.typeorm-repository';
 import { DomainException } from '../../../../core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from '../../../../core/exceptions/domain-exception-codes';
 
@@ -12,7 +12,7 @@ export class ConfirmRegistrationUseCase implements ICommandHandler<
   ConfirmRegistrationCommand,
   void
 > {
-  constructor(private usersRepository: UsersRepository) {}
+  constructor(private usersRepository: UsersTypeOrmRepository) {}
 
   async execute({ code }: ConfirmRegistrationCommand): Promise<void> {
     const user = await this.usersRepository.findByConfirmationCode(code);

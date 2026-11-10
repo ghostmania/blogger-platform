@@ -1,7 +1,7 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
 import { CreateUserDto } from '../../dto/create-user.dto';
-import { UsersRepository } from '../../infrastructure/users.repository.abstract';
+import { UsersTypeOrmRepository } from '../../infrastructure/typeorm/users.typeorm-repository';
 import { UserEmailNotifier } from '../user-email-notifier.service';
 import { CreateUserCommand } from './create-user.usecase';
 import { CONFIRMATION_CODE_TTL_MS } from '../../constants/auth.constants';
@@ -17,7 +17,7 @@ export class RegisterUserUseCase implements ICommandHandler<
 > {
   constructor(
     private commandBus: CommandBus,
-    private usersRepository: UsersRepository,
+    private usersRepository: UsersTypeOrmRepository,
     private emailNotifier: UserEmailNotifier,
   ) {}
 

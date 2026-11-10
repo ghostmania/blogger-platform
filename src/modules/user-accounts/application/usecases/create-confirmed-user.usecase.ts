@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateUserDto } from '../../dto/create-user.dto';
-import { UsersRepository } from '../../infrastructure/users.repository.abstract';
+import { UsersTypeOrmRepository } from '../../infrastructure/typeorm/users.typeorm-repository';
 import { CreateUserCommand } from './create-user.usecase';
 
 export class CreateConfirmedUserCommand {
@@ -15,7 +15,7 @@ export class CreateConfirmedUserUseCase implements ICommandHandler<
 > {
   constructor(
     private commandBus: CommandBus,
-    private usersRepository: UsersRepository,
+    private usersRepository: UsersTypeOrmRepository,
   ) {}
 
   async execute({ dto }: CreateConfirmedUserCommand): Promise<string> {

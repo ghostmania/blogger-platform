@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { UsersRepository } from '../../infrastructure/users.repository.abstract';
+import { UsersTypeOrmRepository } from '../../infrastructure/typeorm/users.typeorm-repository';
 import { CryptoService } from '../crypto.service';
 import { DomainException } from '../../../../core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from '../../../../core/exceptions/domain-exception-codes';
@@ -17,7 +17,7 @@ export class SetNewPasswordUseCase implements ICommandHandler<
   void
 > {
   constructor(
-    private usersRepository: UsersRepository,
+    private usersRepository: UsersTypeOrmRepository,
     private cryptoService: CryptoService,
   ) {}
 

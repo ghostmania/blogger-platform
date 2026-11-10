@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../domain/user.entity';
 import { CreateUserDomainDto } from '../../domain/dto/create-user.domain.dto';
-import { UsersRepository } from '../users.repository.abstract';
 import { DomainException } from '../../../../core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from '../../../../core/exceptions/domain-exception-codes';
 
@@ -11,12 +10,10 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Injectable()
-export class UsersTypeOrmRepository extends UsersRepository {
+export class UsersTypeOrmRepository {
   constructor(
     @InjectRepository(User) private readonly repository: Repository<User>,
-  ) {
-    super();
-  }
+  ) {}
 
   createInstance(dto: CreateUserDomainDto): User {
     return User.createInstance(dto);

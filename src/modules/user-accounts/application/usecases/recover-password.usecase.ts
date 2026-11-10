@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
-import { UsersRepository } from '../../infrastructure/users.repository.abstract';
+import { UsersTypeOrmRepository } from '../../infrastructure/typeorm/users.typeorm-repository';
 import { UserEmailNotifier } from '../user-email-notifier.service';
 import { RECOVERY_CODE_TTL_MS } from '../../constants/auth.constants';
 
@@ -14,7 +14,7 @@ export class RecoverPasswordUseCase implements ICommandHandler<
   void
 > {
   constructor(
-    private usersRepository: UsersRepository,
+    private usersRepository: UsersTypeOrmRepository,
     private emailNotifier: UserEmailNotifier,
   ) {}
 

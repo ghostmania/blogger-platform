@@ -1,7 +1,9 @@
 import { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { GLOBAL_PREFIX } from './global-prefix.setup';
 import { REFRESH_TOKEN_COOKIE_NAME } from '../modules/user-accounts/constants/auth.constants';
+
+//роуты живут в корне (без глобального префикса), swagger UI — на /api
+const SWAGGER_PATH = 'api';
 
 export function swaggerSetup(app: INestApplication) {
   const config = new DocumentBuilder()
@@ -16,7 +18,7 @@ export function swaggerSetup(app: INestApplication) {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup(GLOBAL_PREFIX, app, document, {
+  SwaggerModule.setup(SWAGGER_PATH, app, document, {
     customSiteTitle: 'Blogger Swagger',
   });
 }

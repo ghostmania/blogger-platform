@@ -1,6 +1,6 @@
 import { TypeOrmThrottlerStorage } from '../src/core/rate-limiting/typeorm-throttler-storage';
 import { IpRestriction } from '../src/core/rate-limiting/ip-restriction.entity';
-import { SecurityDevicesRepository } from '../src/modules/user-accounts/infrastructure/security-devices.repository.abstract';
+import { SecurityDevicesTypeOrmRepository } from '../src/modules/user-accounts/infrastructure/typeorm/security-devices.typeorm-repository';
 import { DataSource } from 'typeorm';
 import { DeviceSession } from '../src/modules/user-accounts/domain/device-session.entity';
 import { refreshTokenCookie, extractRefreshToken } from './helpers/cookies';
@@ -157,7 +157,7 @@ describe('Auth stage two and testing reset', () => {
       session.expirationDate,
       session.ip,
     );
-    const repository = app.get(SecurityDevicesRepository);
+    const repository = app.get(SecurityDevicesTypeOrmRepository);
     await repository.deleteByDeviceId(session.deviceId);
     expect(await repository.rotate(session, previous)).toBe(false);
     expect(await source.getRepository(DeviceSession).count()).toBe(0);

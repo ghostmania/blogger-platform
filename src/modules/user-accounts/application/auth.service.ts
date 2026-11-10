@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { UsersRepository } from '../infrastructure/users.repository.abstract';
+import { UsersTypeOrmRepository } from '../infrastructure/typeorm/users.typeorm-repository';
 import { UserContextDto } from '../guards/dto/user-context.dto';
 import { CryptoService } from './crypto.service';
 
@@ -8,7 +8,7 @@ import { CryptoService } from './crypto.service';
 @Injectable()
 export class AuthService {
   constructor(
-    private usersRepository: UsersRepository,
+    private usersRepository: UsersTypeOrmRepository,
     private cryptoService: CryptoService,
   ) {}
 

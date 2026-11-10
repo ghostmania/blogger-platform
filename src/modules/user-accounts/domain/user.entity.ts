@@ -11,7 +11,6 @@ import { CreateUserDomainDto } from './dto/create-user.domain.dto';
 import { Name } from './name.embedded';
 import { EmailConfirmation } from './email-confirmation.embedded';
 import { PasswordRecovery } from './password-recovery.embedded';
-import { UserEntity } from './entity.contracts';
 
 @Entity('users')
 @Index('users_login_unique_idx', ['login'], {
@@ -22,7 +21,7 @@ import { UserEntity } from './entity.contracts';
   unique: true,
   where: 'deleted_at IS NULL',
 })
-export class User implements UserEntity {
+export class User {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id: string;
   @Column({ type: 'varchar', length: 10 })

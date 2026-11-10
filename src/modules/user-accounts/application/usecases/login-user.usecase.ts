@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
-import { SecurityDevicesRepository } from '../../infrastructure/security-devices.repository.abstract';
+import { SecurityDevicesTypeOrmRepository } from '../../infrastructure/typeorm/security-devices.typeorm-repository';
 import { AuthTokensService } from '../auth-tokens.service';
 
 export type LoginUserResult = {
@@ -23,7 +23,7 @@ export class LoginUserUseCase implements ICommandHandler<
 > {
   constructor(
     //Создание сессии делегировано репозиторию.
-    private securityDevicesRepository: SecurityDevicesRepository,
+    private securityDevicesRepository: SecurityDevicesTypeOrmRepository,
     private authTokensService: AuthTokensService,
   ) {}
 

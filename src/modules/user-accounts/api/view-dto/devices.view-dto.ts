@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { DeviceSessionEntity } from '../../domain/entity.contracts';
+import { DeviceSession } from '../../domain/device-session.entity';
 
 //формат ответа GET /security/devices по swagger-спеке
 export class DeviceViewDto {
@@ -15,7 +15,7 @@ export class DeviceViewDto {
   @ApiProperty({ description: 'Id of connected device session' })
   deviceId: string;
 
-  static mapToView(session: DeviceSessionEntity): DeviceViewDto {
+  static mapToView(session: DeviceSession): DeviceViewDto {
     const dto = new DeviceViewDto();
 
     dto.ip = session.ip;

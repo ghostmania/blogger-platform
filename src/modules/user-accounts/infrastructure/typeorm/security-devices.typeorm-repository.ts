@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { DeviceSession } from '../../domain/device-session.entity';
 import { CreateDeviceSessionDomainDto } from '../../domain/dto/create-device-session.domain.dto';
-import { SecurityDevicesRepository } from '../security-devices.repository.abstract';
 import { DomainException } from '../../../../core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from '../../../../core/exceptions/domain-exception-codes';
 
@@ -11,13 +10,11 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Injectable()
-export class SecurityDevicesTypeOrmRepository extends SecurityDevicesRepository {
+export class SecurityDevicesTypeOrmRepository {
   constructor(
     @InjectRepository(DeviceSession)
     private readonly repository: Repository<DeviceSession>,
-  ) {
-    super();
-  }
+  ) {}
   createInstance(dto: CreateDeviceSessionDomainDto): DeviceSession {
     return DeviceSession.createInstance(dto);
   }

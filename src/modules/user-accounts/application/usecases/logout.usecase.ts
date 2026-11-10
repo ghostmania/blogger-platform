@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { SecurityDevicesRepository } from '../../infrastructure/security-devices.repository.abstract';
+import { SecurityDevicesTypeOrmRepository } from '../../infrastructure/typeorm/security-devices.typeorm-repository';
 
 export class LogoutCommand {
   constructor(public deviceId: string) {}
@@ -7,7 +7,9 @@ export class LogoutCommand {
 
 @CommandHandler(LogoutCommand)
 export class LogoutUseCase implements ICommandHandler<LogoutCommand, void> {
-  constructor(private securityDevicesRepository: SecurityDevicesRepository) {}
+  constructor(
+    private securityDevicesRepository: SecurityDevicesTypeOrmRepository,
+  ) {}
 
   //удаление сессии отзывает refresh-токен устройства: предъявить его повторно нельзя
   async execute({ deviceId }: LogoutCommand): Promise<void> {

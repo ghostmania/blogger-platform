@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { SecurityDevicesQueryRepository } from '../../infrastructure/query/security-devices.query-repository.abstract';
+import { SecurityDevicesTypeOrmQueryRepository } from '../../infrastructure/typeorm/security-devices.typeorm-query-repository';
 import { DeviceViewDto } from '../../api/view-dto/devices.view-dto';
 
 export class GetDevicesQuery {
@@ -12,7 +12,7 @@ export class GetDevicesQueryHandler implements IQueryHandler<
   DeviceViewDto[]
 > {
   constructor(
-    private securityDevicesQueryRepository: SecurityDevicesQueryRepository,
+    private securityDevicesQueryRepository: SecurityDevicesTypeOrmQueryRepository,
   ) {}
 
   execute({ userId }: GetDevicesQuery): Promise<DeviceViewDto[]> {

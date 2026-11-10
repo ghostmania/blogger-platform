@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateUserDto } from '../../dto/create-user.dto';
-import { UsersRepository } from '../../infrastructure/users.repository.abstract';
+import { UsersTypeOrmRepository } from '../../infrastructure/typeorm/users.typeorm-repository';
 import { CryptoService } from '../crypto.service';
 import { DomainException } from '../../../../core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from '../../../../core/exceptions/domain-exception-codes';
@@ -18,7 +18,7 @@ export class CreateUserUseCase implements ICommandHandler<
   string
 > {
   constructor(
-    private usersRepository: UsersRepository,
+    private usersRepository: UsersTypeOrmRepository,
     private cryptoService: CryptoService,
   ) {}
 

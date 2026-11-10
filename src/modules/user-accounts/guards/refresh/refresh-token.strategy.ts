@@ -1,9 +1,9 @@
-import { UsersRepository } from '../../infrastructure/users.repository.abstract';
+import { UsersTypeOrmRepository } from '../../infrastructure/typeorm/users.typeorm-repository';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { SecurityDevicesRepository } from '../../infrastructure/security-devices.repository.abstract';
+import { SecurityDevicesTypeOrmRepository } from '../../infrastructure/typeorm/security-devices.typeorm-repository';
 import {
   RefreshTokenContextDto,
   RefreshTokenPayloadDto,
@@ -27,8 +27,8 @@ export class RefreshTokenStrategy extends PassportStrategy(
   REFRESH_TOKEN_STRATEGY_NAME,
 ) {
   constructor(
-    private securityDevicesRepository: SecurityDevicesRepository,
-    private usersRepository: UsersRepository,
+    private securityDevicesRepository: SecurityDevicesTypeOrmRepository,
+    private usersRepository: UsersTypeOrmRepository,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([

@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Brackets } from 'typeorm';
 import { User } from '../../domain/user.entity';
-import { UsersQueryRepository } from '../query/users.query-repository.abstract';
 import { UserViewDto } from '../../api/view-dto/users.view-dto';
 import { GetUsersQueryParams } from '../../api/input-dto/get-users-query-params.input-dto';
 import { PaginatedViewDto } from '../../../../core/dto/base.paginated.view-dto';
@@ -11,15 +10,13 @@ import { DomainExceptionCode } from '../../../../core/exceptions/domain-exceptio
 import {
   resolveSortExpression,
   resolveSortDirection,
-} from '../sql/query/users-sort-columns';
+} from './query/users-sort-columns';
 
 @Injectable()
-export class UsersTypeOrmQueryRepository extends UsersQueryRepository {
+export class UsersTypeOrmQueryRepository {
   constructor(
     @InjectRepository(User) private readonly repository: Repository<User>,
-  ) {
-    super();
-  }
+  ) {}
 
   async getByIdOrNotFoundFail(id: string): Promise<UserViewDto> {
     const user =

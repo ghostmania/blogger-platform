@@ -7,13 +7,9 @@ import { User } from './domain/user.entity';
 import { AuthController } from './api/auth.controller';
 import { SecurityDevicesController } from './api/security-devices.controller';
 
-import { UsersRepository } from './infrastructure/users.repository.abstract';
 import { UsersTypeOrmRepository } from './infrastructure/typeorm/users.typeorm-repository';
-import { SecurityDevicesRepository } from './infrastructure/security-devices.repository.abstract';
 import { SecurityDevicesTypeOrmRepository } from './infrastructure/typeorm/security-devices.typeorm-repository';
-import { UsersQueryRepository } from './infrastructure/query/users.query-repository.abstract';
 import { UsersTypeOrmQueryRepository } from './infrastructure/typeorm/users.typeorm-query-repository';
-import { SecurityDevicesQueryRepository } from './infrastructure/query/security-devices.query-repository.abstract';
 import { SecurityDevicesTypeOrmQueryRepository } from './infrastructure/typeorm/security-devices.typeorm-query-repository';
 import { AuthQueryRepository } from './infrastructure/query/auth.query-repository';
 import { UsersExternalQueryRepository } from './infrastructure/external-query/users.external-query-repository';
@@ -81,17 +77,12 @@ const queryHandlers = [
   GetDevicesQueryHandler,
 ];
 
-const persistenceProviders = [
-  { provide: UsersRepository, useClass: UsersTypeOrmRepository },
-  { provide: UsersQueryRepository, useClass: UsersTypeOrmQueryRepository },
-  {
-    provide: SecurityDevicesRepository,
-    useClass: SecurityDevicesTypeOrmRepository,
-  },
-  {
-    provide: SecurityDevicesQueryRepository,
-    useClass: SecurityDevicesTypeOrmQueryRepository,
-  },
+//репозитории — конкретные TypeORM-классы: других реализаций хранилища больше нет
+const repositories = [
+  UsersTypeOrmRepository,
+  UsersTypeOrmQueryRepository,
+  SecurityDevicesTypeOrmRepository,
+  SecurityDevicesTypeOrmQueryRepository,
 ];
 
 //access и refresh подписываются разными секретами с разным TTL, поэтому в IoC
@@ -122,7 +113,7 @@ const tokenStrategies = [
   ],
   controllers: [AuthController, SecurityDevicesController],
   providers: [
-    ...persistenceProviders,
+    ...repositories,
     AuthQueryRepository,
     UsersExternalQueryRepository,
     AuthService,

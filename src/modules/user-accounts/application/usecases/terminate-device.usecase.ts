@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { SecurityDevicesRepository } from '../../infrastructure/security-devices.repository.abstract';
+import { SecurityDevicesTypeOrmRepository } from '../../infrastructure/typeorm/security-devices.typeorm-repository';
 import { DomainException } from '../../../../core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from '../../../../core/exceptions/domain-exception-codes';
 
@@ -15,7 +15,9 @@ export class TerminateDeviceUseCase implements ICommandHandler<
   TerminateDeviceCommand,
   void
 > {
-  constructor(private securityDevicesRepository: SecurityDevicesRepository) {}
+  constructor(
+    private securityDevicesRepository: SecurityDevicesTypeOrmRepository,
+  ) {}
 
   async execute({ userId, deviceId }: TerminateDeviceCommand): Promise<void> {
     //по спеке порядок важен: несуществующее устройство — 404, чужое — 403
