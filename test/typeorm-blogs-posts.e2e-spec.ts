@@ -1,10 +1,8 @@
 import { INestApplication } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { Pool } from 'pg';
 import request from 'supertest';
 import { initSettings } from './helpers/init-settings';
 import { deleteAllData } from './helpers/delete-all-data';
-import { PG_POOL } from '../src/core/database/database.constants';
 import { Blog } from '../src/modules/bloggers-platform/blogs/domain/blog.entity';
 import { Post } from '../src/modules/bloggers-platform/posts/domain/post.entity';
 
@@ -68,7 +66,7 @@ describe('TypeORM blogs and posts (public + super admin API)', () => {
     expect(dataSource.getMetadata(Blog).tableName).toBe('blogs');
     expect(dataSource.getMetadata(Post).tableName).toBe('posts');
     //репозитории TypeORM читают те же строки, что и raw SQL
-    const pool = app.get<Pool>(PG_POOL);
+    const pool = app.get(DataSource);
     await pool.query(
       `INSERT INTO blogs (id, name, description, website_url) VALUES (9007199254740993, 'legacy', 'd', 'https://legacy.com')`,
     );

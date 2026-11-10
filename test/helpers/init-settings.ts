@@ -7,6 +7,7 @@ import { deleteAllData } from './delete-all-data';
 import { EmailService } from '../../src/modules/notifications/email.service';
 import { EmailServiceMock } from '../mock/email-service.mock';
 import { applySchema } from '../../src/core/database/apply-schema';
+import { DataSource } from 'typeorm';
 
 // Each suite owns a schema in an explicitly selected test database.
 export const initSettings = async (
@@ -32,11 +33,17 @@ export const initSettings = async (
     process.env.DATABASE_URL = url.toString();
     process.env.DATABASE_SSL = ssl ? 'true' : 'false';
     process.env.IP_RESTRICTION_ENABLED = String(enableRateLimit);
-    const schemaPool = new Pool({ connectionString: url.toString(), ssl });
+    //схема применяется тем же способом, что и yarn db:init — через TypeORM
+    const schemaSource = new DataSource({
+      type: 'postgres',
+      url: url.toString(),
+      ssl,
+    });
+    await schemaSource.initialize();
     try {
-      await applySchema(schemaPool);
+      await applySchema(schemaSource);
     } finally {
-      await schemaPool.end();
+      await schemaSource.destroy();
     }
 
     const { AppModule } = await import('../../src/app.module');

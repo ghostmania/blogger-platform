@@ -1,11 +1,9 @@
 import { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { DataSource } from 'typeorm';
-import { Pool } from 'pg';
 import request from 'supertest';
 import { initSettings } from './helpers/init-settings';
 import { deleteAllData } from './helpers/delete-all-data';
-import { PG_POOL } from '../src/core/database/database.constants';
 import { User } from '../src/modules/user-accounts/domain/user.entity';
 
 describe('TypeORM users assignment', () => {
@@ -77,7 +75,7 @@ describe('TypeORM users assignment', () => {
   });
 
   it('keeps preexisting SQL rows and applies OR search, ordering and out-of-range pagination', async () => {
-    const pool = app.get<Pool>(PG_POOL);
+    const pool = app.get(DataSource);
     await pool.query(
       `INSERT INTO users (id, login, email, password_hash) VALUES (9007199254740993, 'legacy', 'legacy@example.com', 'unused'), (42, 'Bob', 'second@example.com', 'unused')`,
     );

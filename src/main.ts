@@ -1,5 +1,5 @@
-//.env читается до импорта AppModule: фабрика PG_POOL берёт DATABASE_URL
-//при создании провайдера
+//.env читается до импорта AppModule: фабрика TypeORM берёт DATABASE_URL
+//при создании подключения
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';

@@ -1,21 +1,15 @@
-import {
-  Controller,
-  Delete,
-  HttpCode,
-  HttpStatus,
-  Inject,
-} from '@nestjs/common';
-import { Pool } from 'pg';
-import { PG_POOL } from '../../core/database/database.constants';
+import { Controller, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 
 @Controller('testing')
 export class TestingController {
-  constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
+  constructor(private readonly dataSource: DataSource) {}
 
+  //каскад от users/blogs сносит сессии, посты, комментарии и реакции
   @Delete('all-data')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteAll(): Promise<void> {
-    await this.pool.query(
+    await this.dataSource.query(
       'TRUNCATE TABLE device_sessions, users, blogs, ip_restrictions RESTART IDENTITY CASCADE',
     );
   }

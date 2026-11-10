@@ -10,7 +10,6 @@ import { User } from './modules/user-accounts/domain/user.entity';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TestingModule } from './modules/testing/testing.module';
 import { CoreModule } from './core/core.module';
-import { DatabaseModule } from './core/database/database.module';
 import { APP_FILTER } from '@nestjs/core';
 import { AllHttpExceptionsFilter } from './core/exceptions/filters/all-exceptions.filter';
 import { DomainHttpExceptionsFilter } from './core/exceptions/filters/domain-exceptions.filter';
@@ -28,8 +27,6 @@ import { CommentLike } from './modules/bloggers-platform/likes/domain/comment-li
 
 @Module({
   imports: [
-    //Postgres-пул для SQL-реализации user-accounts
-    DatabaseModule,
     TypeOrmModule.forRootAsync({
       useFactory: () => ({
         type: 'postgres',
@@ -45,7 +42,7 @@ import { CommentLike } from './modules/bloggers-platform/likes/domain/comment-li
           CommentLike,
         ],
         synchronize: false,
-        //настройки pg Pool внутри TypeORM — те же, что у PG_POOL
+        //таймауты пула — см. postgres-options.ts
         extra: poolOptions,
       }),
     }),

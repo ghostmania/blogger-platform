@@ -1,5 +1,5 @@
-//.env читается до импорта AppModule: фабрика PG_POOL берёт DATABASE_URL
-//при создании провайдера
+//.env читается до импорта AppModule: фабрика TypeORM берёт DATABASE_URL
+//при создании подключения
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
@@ -9,7 +9,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 // Serverless-адаптер для Vercel.
 // На проде НЕ используем app.listen() — Vercel вызывает экспортированный handler.
 // Инстанс Nest кешируется между вызовами в рамках тёплого контейнера,
-// чтобы не поднимать приложение (и коннект к Mongo) на каждый запрос.
+// чтобы не поднимать приложение (и коннект к PostgreSQL) на каждый запрос.
 let cachedServer: Promise<
   (req: IncomingMessage, res: ServerResponse) => void
 > | null = null;
