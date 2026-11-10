@@ -23,7 +23,8 @@ const postInput = {
   shortDescription: 'short description',
   content: 'post content',
 };
-const stubLikes = {
+//пост без реакций: нули, None и пустой список последних лайков
+const noReactions = {
   likesCount: 0,
   dislikesCount: 0,
   myStatus: 'None',
@@ -84,7 +85,7 @@ describe('TypeORM blogs and posts (public + super admin API)', () => {
     expect(posts.items[0]).toMatchObject({
       blogId: '9007199254740993',
       blogName: 'legacy',
-      extendedLikesInfo: stubLikes,
+      extendedLikesInfo: noReactions,
     });
   });
 
@@ -273,7 +274,7 @@ describe('TypeORM blogs and posts (public + super admin API)', () => {
   });
 
   describe('super admin posts of a blog', () => {
-    it('creates a post with stub likes info and exposes it to the public API', async () => {
+    it('creates a post without reactions and exposes it to the public API', async () => {
       const blog = await createBlog();
       const post = await createPost(blog.id);
       expect(post).toEqual({
@@ -282,7 +283,7 @@ describe('TypeORM blogs and posts (public + super admin API)', () => {
         blogId: blog.id,
         blogName: blog.name,
         createdAt: expect.any(String),
-        extendedLikesInfo: stubLikes,
+        extendedLikesInfo: noReactions,
       });
 
       expect((await request(server()).get(`/posts/${post.id}`)).body).toEqual(

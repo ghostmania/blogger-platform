@@ -1,22 +1,40 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { Post } from '../../../domain/post.entity';
-import { PostViewDto } from '../../../api/view-dto/posts.view-dto';
+import {
+  NewestLikeViewDto,
+  PostViewDto,
+} from '../../../api/view-dto/posts.view-dto';
 import { GetPostsQueryParams } from '../../../api/input-dto/get-posts-query-params.input-dto';
 import { PaginatedViewDto } from '../../../../../../core/dto/base.paginated.view-dto';
 import { DomainException } from '../../../../../../core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from '../../../../../../core/exceptions/domain-exception-codes';
 import { isBigintId } from '../../../../../../core/database/bigint-id';
+import { LikeStatus } from '../../../../enums/like-status.enum';
+import { PostLike } from '../../../../likes/domain/post-like.entity';
+import { User } from '../../../../../user-accounts/domain/user.entity';
 import {
   resolveSortDirection,
   resolveSortExpression,
 } from './posts-sort-columns';
 
-/**
- * Лайки на этом этапе миграции не читаются: extendedLikesInfo заполняется
- * значениями-заглушками в PostViewDto.mapToView (0 / None / []).
- */
+//сырые колонки реакций, которые добавляются к выборке постов
+type LikesRow = {
+  likes_count: string;
+  dislikes_count: string;
+  my_status: LikeStatus | null;
+};
+
+type NewestLikeRow = {
+  post_id: string;
+  user_id: string;
+  login: string;
+  added_at: Date;
+};
+
+const NEWEST_LIKES_LIMIT = 3;
+
 @Injectable()
 export class PostsTypeOrmQueryRepository {
   constructor(
@@ -27,41 +45,174 @@ export class PostsTypeOrmQueryRepository {
   async getAll(
     query: GetPostsQueryParams,
     blogId?: string,
+    userId: string | null = null,
   ): Promise<PaginatedViewDto<PostViewDto[]>> {
-    const builder = this.repository.createQueryBuilder('p');
+    const builder = this.withLikes(
+      this.repository.createQueryBuilder('p'),
+      userId,
+    );
 
     if (blogId !== undefined) {
       builder.where('p.blog_id = :blogId', { blogId });
     }
 
     const direction = resolveSortDirection(query.sortDirection);
-    const [posts, totalCount] = await builder
+    builder
       .orderBy(resolveSortExpression(query.sortBy), direction)
       .addOrderBy('p.id', direction)
       .offset(query.calculateSkip())
-      .limit(query.pageSize)
-      .getManyAndCount();
+      .limit(query.pageSize);
+
+    //счётчик — отдельным запросом: getManyAndCount не дружит с getRawAndEntities
+    const [{ entities, raw }, totalCount] = await Promise.all([
+      builder.getRawAndEntities<LikesRow>(),
+      blogId !== undefined
+        ? this.repository.countBy({ blogId })
+        : this.repository.count(),
+    ]);
+    const newestLikes = await this.newestLikes(entities.map((post) => post.id));
 
     return PaginatedViewDto.mapToView({
-      items: posts.map(PostViewDto.mapToView),
+      items: entities.map((post, index) =>
+        this.toView(post, raw[index], newestLikes.get(post.id) ?? []),
+      ),
       totalCount,
       page: query.pageNumber,
       size: query.pageSize,
     });
   }
 
-  async getByIdOrNotFoundFail(id: string): Promise<PostViewDto> {
-    const post = isBigintId(id)
-      ? await this.repository.findOneBy({ id })
-      : null;
+  async getByIdOrNotFoundFail(
+    id: string,
+    userId: string | null = null,
+  ): Promise<PostViewDto> {
+    const { entities, raw } = isBigintId(id)
+      ? await this.withLikes(
+          this.repository.createQueryBuilder('p').where('p.id = :id', { id }),
+          userId,
+        ).getRawAndEntities<LikesRow>()
+      : { entities: [], raw: [] };
 
-    if (!post) {
+    if (!entities.length) {
       throw new DomainException({
         code: DomainExceptionCode.NotFound,
         message: 'Post not found',
       });
     }
 
-    return PostViewDto.mapToView(post);
+    const newestLikes = await this.newestLikes([id]);
+    return this.toView(entities[0], raw[0], newestLikes.get(id) ?? []);
+  }
+
+  /**
+   * Реакции считаются коррелированными подзапросами к post_likes: без join'а
+   * строки постов не размножаются, и offset/limit работают как есть.
+   * «Моя реакция» запрашивается только для авторизованного читателя.
+   */
+  private withLikes(
+    builder: SelectQueryBuilder<Post>,
+    userId: string | null,
+  ): SelectQueryBuilder<Post> {
+    builder
+      .addSelect(
+        (sub) =>
+          sub
+            .select('COUNT(*)')
+            .from(PostLike, 'l')
+            .where('l.post_id = p.id AND l.status = :like'),
+        'likes_count',
+      )
+      .addSelect(
+        (sub) =>
+          sub
+            .select('COUNT(*)')
+            .from(PostLike, 'l')
+            .where('l.post_id = p.id AND l.status = :dislike'),
+        'dislikes_count',
+      )
+      .setParameters({ like: LikeStatus.Like, dislike: LikeStatus.Dislike });
+
+    if (userId !== null) {
+      builder
+        .addSelect(
+          (sub) =>
+            sub
+              .select('l.status')
+              .from(PostLike, 'l')
+              .where('l.post_id = p.id AND l.user_id = :userId'),
+          'my_status',
+        )
+        .setParameter('userId', userId);
+    }
+
+    return builder;
+  }
+
+  /**
+   * «Последние лайки» для всех постов страницы одним запросом: лайки
+   * нумеруются внутри поста от новых к старым, берутся первые три.
+   * Удалённые (мягко) пользователи не исключаются — их лайки остаются видны.
+   */
+  private async newestLikes(
+    postIds: string[],
+  ): Promise<Map<string, NewestLikeViewDto[]>> {
+    const result = new Map<string, NewestLikeViewDto[]>();
+    if (!postIds.length) return result;
+
+    const rows = await this.repository.manager
+      .createQueryBuilder()
+      .select('ranked.post_id', 'post_id')
+      .addSelect('ranked.user_id', 'user_id')
+      .addSelect('ranked.added_at', 'added_at')
+      .addSelect('u.login', 'login')
+      .from(
+        (sub) =>
+          sub
+            .select('l.post_id', 'post_id')
+            .addSelect('l.user_id', 'user_id')
+            .addSelect('l.added_at', 'added_at')
+            .addSelect(
+              'ROW_NUMBER() OVER (PARTITION BY l.post_id ORDER BY l.added_at DESC, l.user_id DESC)',
+              'rn',
+            )
+            .from(PostLike, 'l')
+            .where('l.post_id IN (:...postIds) AND l.status = :like', {
+              postIds,
+              like: LikeStatus.Like,
+            }),
+        'ranked',
+      )
+      .innerJoin(User, 'u', 'u.id = ranked.user_id')
+      .withDeleted()
+      .where('ranked.rn <= :limit', { limit: NEWEST_LIKES_LIMIT })
+      .orderBy('ranked.post_id')
+      .addOrderBy('ranked.added_at', 'DESC')
+      .addOrderBy('ranked.user_id', 'DESC')
+      .getRawMany<NewestLikeRow>();
+
+    for (const row of rows) {
+      const likes = result.get(row.post_id) ?? [];
+      likes.push({
+        addedAt: row.added_at.toISOString(),
+        userId: row.user_id,
+        login: row.login,
+      });
+      result.set(row.post_id, likes);
+    }
+
+    return result;
+  }
+
+  private toView(
+    post: Post,
+    likes: LikesRow,
+    newestLikes: NewestLikeViewDto[],
+  ): PostViewDto {
+    return PostViewDto.mapToView(post, {
+      likesCount: Number(likes.likes_count),
+      dislikesCount: Number(likes.dislikes_count),
+      myStatus: likes.my_status ?? LikeStatus.None,
+      newestLikes,
+    });
   }
 }

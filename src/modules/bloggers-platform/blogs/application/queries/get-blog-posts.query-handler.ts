@@ -9,7 +9,7 @@ export class GetBlogPostsQuery {
   constructor(
     public readonly blogId: string,
     public readonly queryParams: GetPostsQueryParams,
-    //userId понадобится для myStatus, когда лайки переедут на TypeORM
+    //userId нужен для «моей реакции»; у анонимного читателя — null
     public readonly userId: string | null = null,
   ) {}
 }
@@ -27,9 +27,10 @@ export class GetBlogPostsQueryHandler implements IQueryHandler<
   async execute({
     blogId,
     queryParams,
+    userId,
   }: GetBlogPostsQuery): Promise<PaginatedViewDto<PostViewDto[]>> {
     //404, если блога нет — пустой список для несуществующего блога был бы ошибкой контракта
     await this.blogsQueryRepository.getByIdOrNotFoundFail(blogId);
-    return this.postsQueryRepository.getAll(queryParams, blogId);
+    return this.postsQueryRepository.getAll(queryParams, blogId, userId);
   }
 }

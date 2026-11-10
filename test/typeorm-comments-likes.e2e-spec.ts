@@ -269,11 +269,10 @@ describe('TypeORM comments and reactions (public API)', () => {
     it('handles concurrent and changing reactions for comments', () =>
       reactionScenario('comments'));
 
-    //view поста отдаёт заглушки до миграции реакций постов на TypeORM (тикет 04)
-    it.skip('handles concurrent and changing reactions for posts', () =>
+    it('handles concurrent and changing reactions for posts', () =>
       reactionScenario('posts'));
 
-    it.skip('returns the newest three likes, keeps repeated likes stable, and updates list views', async () => {
+    it('returns the newest three likes, keeps repeated likes stable, and updates list views', async () => {
       const target = `/posts/${posts[0]}`;
       for (let i = 0; i < 4; i++) await reaction(target, 'Like', i);
       let post = await read(target, 0);

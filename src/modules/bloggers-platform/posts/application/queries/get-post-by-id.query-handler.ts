@@ -5,7 +5,7 @@ import { PostViewDto } from '../../api/view-dto/posts.view-dto';
 export class GetPostByIdQuery {
   constructor(
     public id: string,
-    //userId понадобится для myStatus, когда лайки переедут на TypeORM
+    //userId нужен для «моей реакции»; у анонимного читателя — null
     public userId: string | null = null,
   ) {}
 }
@@ -17,7 +17,7 @@ export class GetPostByIdQueryHandler implements IQueryHandler<
 > {
   constructor(private postsQueryRepository: PostsTypeOrmQueryRepository) {}
 
-  async execute({ id }: GetPostByIdQuery): Promise<PostViewDto> {
-    return this.postsQueryRepository.getByIdOrNotFoundFail(id);
+  async execute({ id, userId }: GetPostByIdQuery): Promise<PostViewDto> {
+    return this.postsQueryRepository.getByIdOrNotFoundFail(id, userId);
   }
 }

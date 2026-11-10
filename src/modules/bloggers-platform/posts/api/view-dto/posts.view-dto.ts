@@ -25,11 +25,11 @@ export class PostViewDto {
   createdAt: Date;
   extendedLikesInfo: ExtendedLikesInfoViewDto;
 
-  /**
-   * Лайки и комментарии на TypeORM ещё не переведены, поэтому extendedLikesInfo
-   * заполняется заглушками ради контракта ViewModel: 0 / 0 / None / [].
-   */
-  static mapToView(post: Post): PostViewDto {
+  //реакции приходят отдельно: сущность поста их не хранит
+  static mapToView(
+    post: Post,
+    extendedLikesInfo: ExtendedLikesInfoViewDto,
+  ): PostViewDto {
     const dto = new PostViewDto();
     dto.id = post.id;
     dto.title = post.title;
@@ -38,12 +38,7 @@ export class PostViewDto {
     dto.blogId = post.blogId;
     dto.blogName = post.blogName;
     dto.createdAt = post.createdAt;
-    dto.extendedLikesInfo = {
-      likesCount: 0,
-      dislikesCount: 0,
-      myStatus: LikeStatus.None,
-      newestLikes: [],
-    };
+    dto.extendedLikesInfo = extendedLikesInfo;
     return dto;
   }
 }

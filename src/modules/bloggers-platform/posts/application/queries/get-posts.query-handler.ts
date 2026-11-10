@@ -7,7 +7,7 @@ import { PaginatedViewDto } from '../../../../../core/dto/base.paginated.view-dt
 export class GetPostsQuery {
   constructor(
     public queryParams: GetPostsQueryParams,
-    //userId понадобится для myStatus, когда лайки переедут на TypeORM
+    //userId нужен для «моей реакции»; у анонимного читателя — null
     public userId: string | null = null,
   ) {}
 }
@@ -21,7 +21,8 @@ export class GetPostsQueryHandler implements IQueryHandler<
 
   async execute({
     queryParams,
+    userId,
   }: GetPostsQuery): Promise<PaginatedViewDto<PostViewDto[]>> {
-    return this.postsQueryRepository.getAll(queryParams);
+    return this.postsQueryRepository.getAll(queryParams, undefined, userId);
   }
 }
