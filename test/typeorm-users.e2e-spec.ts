@@ -125,10 +125,9 @@ describe('TypeORM users assignment', () => {
         .expect(200);
       accessToken = body.accessToken;
     }
-    const payload = new JwtService().decode(accessToken) as {
-      exp: number;
-      iat: number;
-    };
+    const payload = new JwtService().decode<{ exp: number; iat: number }>(
+      accessToken,
+    );
     expect(payload.exp - payload.iat).toBeGreaterThanOrEqual(300);
     await request(app.getHttpServer())
       .get('/auth/me')

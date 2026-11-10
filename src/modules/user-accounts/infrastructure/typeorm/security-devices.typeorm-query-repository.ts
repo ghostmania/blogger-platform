@@ -15,6 +15,6 @@ export class SecurityDevicesTypeOrmQueryRepository {
       where: { userId, expirationDate: MoreThan(new Date()) },
       order: { lastActiveDate: 'ASC', deviceId: 'ASC' },
     });
-    return sessions.map(DeviceViewDto.mapToView);
+    return sessions.map((session) => DeviceViewDto.mapToView(session));
   }
 }

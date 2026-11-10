@@ -70,7 +70,7 @@ export class UsersTestManager {
 
   async refreshTokens(
     refreshToken: string,
-    statusCode: number = HttpStatus.OK,
+    statusCode: HttpStatus = HttpStatus.OK,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const response = await request(this.app.getHttpServer())
       .post(`/auth/refresh-token`)

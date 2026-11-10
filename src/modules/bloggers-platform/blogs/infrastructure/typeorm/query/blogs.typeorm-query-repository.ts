@@ -40,7 +40,7 @@ export class BlogsTypeOrmQueryRepository {
       .getManyAndCount();
 
     return PaginatedViewDto.mapToView({
-      items: blogs.map(BlogViewDto.mapToView),
+      items: blogs.map((blog) => BlogViewDto.mapToView(blog)),
       totalCount,
       page: query.pageNumber,
       size: query.pageSize,

@@ -7,10 +7,7 @@ import { deleteAllData } from './helpers/delete-all-data';
 import { delay } from './helpers/delay';
 import { CreateUserDto } from '../src/modules/user-accounts/dto/create-user.dto';
 import { PaginatedViewDto } from '../src/core/dto/base.paginated.view-dto';
-import {
-  MeViewDto,
-  UserViewDto,
-} from '../src/modules/user-accounts/api/view-dto/users.view-dto';
+import { UserViewDto } from '../src/modules/user-accounts/api/view-dto/users.view-dto';
 import { ACCESS_TOKEN_SECRET } from '../src/modules/user-accounts/constants/auth.constants';
 import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../src/modules/user-accounts/constants/auth-tokens.inject-constants';
 import { DomainExceptionCode } from '../src/core/exceptions/domain-exception-codes';
@@ -198,7 +195,7 @@ describe('users', () => {
       login: expect.anything(),
       userId: expect.anything(),
       email: expect.anything(),
-    } as MeViewDto);
+    });
   });
 
   it(`shouldn't return users info while "me" request if accessTokens expired`, async () => {

@@ -6,21 +6,21 @@ export class EmailServiceMock extends EmailService {
   sentRecoveryCodes: { email: string; code: string }[] = [];
 
   //override method
-  async sendConfirmationEmail(email: string, code: string): Promise<void> {
+  sendConfirmationEmail(email: string, code: string): Promise<void> {
     console.log('Call mock method sendConfirmationEmail / EmailServiceMock');
     this.sentConfirmationCodes.push({ email, code });
 
-    return;
+    return Promise.resolve();
   }
 
   //override method
-  async sendPasswordRecoveryEmail(email: string, code: string): Promise<void> {
+  sendPasswordRecoveryEmail(email: string, code: string): Promise<void> {
     console.log(
       'Call mock method sendPasswordRecoveryEmail / EmailServiceMock',
     );
     this.sentRecoveryCodes.push({ email, code });
 
-    return;
+    return Promise.resolve();
   }
 
   getLastConfirmationCode(): string {

@@ -72,7 +72,7 @@ export class CreateUserUseCase implements ICommandHandler<
       return;
     }
 
-    const code = (error as { code: unknown }).code;
+    const code = error.code;
 
     if (code === POSTGRES_UNIQUE_VIOLATION) {
       const constraint =

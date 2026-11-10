@@ -1,7 +1,6 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { initSettings } from './helpers/init-settings';
-import { EmailServiceMock } from './mock/email-service.mock';
 import { deleteAllData } from './helpers/delete-all-data';
 import { delay } from './helpers/delay';
 import {
@@ -13,7 +12,6 @@ import {
 //Счётчики хранятся в PostgreSQL и очищаются вместе с тестовыми данными.
 describe('ip-restriction (rate limit)', () => {
   let app: INestApplication;
-  let emailServiceMock: EmailServiceMock;
 
   beforeAll(async () => {
     const result = await initSettings(
@@ -22,7 +20,6 @@ describe('ip-restriction (rate limit)', () => {
       true,
     );
     app = result.app;
-    emailServiceMock = result.emailServiceMock;
   });
 
   afterAll(async () => {

@@ -58,7 +58,7 @@ export class UsersTypeOrmQueryRepository {
       .limit(query.pageSize)
       .getManyAndCount();
     return PaginatedViewDto.mapToView({
-      items: users.map(UserViewDto.mapToView),
+      items: users.map((user) => UserViewDto.mapToView(user)),
       totalCount,
       page: query.pageNumber,
       size: query.pageSize,

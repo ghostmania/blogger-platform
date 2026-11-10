@@ -3,12 +3,16 @@ import { AuthGuard } from '@nestjs/passport';
 import { REFRESH_TOKEN_STRATEGY_NAME } from './refresh-token.strategy';
 import { DomainException } from '../../../../core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from '../../../../core/exceptions/domain-exception-codes';
+import { RefreshTokenContextDto } from '../dto/refresh-token-context.dto';
 
 @Injectable()
 export class RefreshTokenAuthGuard extends AuthGuard(
   REFRESH_TOKEN_STRATEGY_NAME,
 ) {
-  handleRequest(err, user) {
+  handleRequest<TUser = RefreshTokenContextDto>(
+    err: unknown,
+    user: RefreshTokenContextDto | false | null,
+  ): TUser {
     //DomainException из strategy.validate уже несёт нужный код — пробрасываем как есть
     if (err instanceof DomainException) {
       throw err;
@@ -22,6 +26,6 @@ export class RefreshTokenAuthGuard extends AuthGuard(
       });
     }
 
-    return user;
+    return user as TUser;
   }
 }

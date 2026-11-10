@@ -18,8 +18,11 @@ import { DomainExceptionCode } from '../../../../core/exceptions/domain-exceptio
 export const REFRESH_TOKEN_STRATEGY_NAME = 'refresh-jwt';
 
 //refresh-токен приходит только в httpOnly cookie, из заголовков его не читаем
-const extractRefreshTokenFromCookie = (request: Request): string | null =>
-  request?.cookies?.[REFRESH_TOKEN_COOKIE_NAME] ?? null;
+const extractRefreshTokenFromCookie = (request: Request): string | null => {
+  const cookies = request.cookies as
+    Record<string, string | undefined> | undefined;
+  return cookies?.[REFRESH_TOKEN_COOKIE_NAME] ?? null;
+};
 
 @Injectable()
 export class RefreshTokenStrategy extends PassportStrategy(

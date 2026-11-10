@@ -46,14 +46,10 @@ describe('token expiration', () => {
     await userTestManger.me(accessToken);
 
     const jwt = new JwtService();
-    const accessPayload = jwt.decode(accessToken) as {
-      exp: number;
-      iat: number;
-    };
-    const refreshPayload = jwt.decode(refreshToken) as {
-      exp: number;
-      iat: number;
-    };
+    const accessPayload = jwt.decode<{ exp: number; iat: number }>(accessToken);
+    const refreshPayload = jwt.decode<{ exp: number; iat: number }>(
+      refreshToken,
+    );
     expect(accessPayload.exp - accessPayload.iat).toBe(10);
     expect(refreshPayload.exp - refreshPayload.iat).toBe(20);
     await delay(10_500);
@@ -66,10 +62,9 @@ describe('token expiration', () => {
       .post('/auth/refresh-token')
       .set('Cookie', refreshTokenCookie(refreshToken))
       .expect(HttpStatus.OK);
-    const renewedPayload = jwt.decode(refreshed.body.accessToken) as {
-      exp: number;
-      iat: number;
-    };
+    const renewedPayload = jwt.decode<{ exp: number; iat: number }>(
+      refreshed.body.accessToken,
+    );
     expect(renewedPayload.exp - renewedPayload.iat).toBe(10);
   }, 40_000);
 

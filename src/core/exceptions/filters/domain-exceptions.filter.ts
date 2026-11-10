@@ -32,7 +32,7 @@ export class DomainHttpExceptionsFilter implements ExceptionFilter {
       .json(this.buildResponseBody(exception, request.url));
   }
 
-  private mapToHttpStatus(code: DomainExceptionCode): number {
+  private mapToHttpStatus(code: DomainExceptionCode): HttpStatus {
     switch (code) {
       case DomainExceptionCode.BadRequest:
       case DomainExceptionCode.ValidationError:
