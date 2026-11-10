@@ -17,7 +17,7 @@ export class UsersTestManager {
     statusCode: number = HttpStatus.CREATED,
   ): Promise<UserViewDto> {
     const response = await request(this.app.getHttpServer())
-      .post(`/users`)
+      .post(`/sa/users`)
       .send(createModel)
       .auth('admin', 'qwerty')
       .expect(statusCode);

@@ -85,10 +85,10 @@ describe('ip-restriction (rate limit)', () => {
   }, 30_000);
 
   it('should not rate limit endpoints outside the auth flow', async () => {
-    //ThrottlerGuard навешен точечно на auth-ручки, а на /users его нет
+    //ThrottlerGuard навешен точечно на auth-ручки, а на /sa/users его нет
     for (let i = 0; i < RATE_LIMIT_MAX + 3; ++i) {
       await request(app.getHttpServer())
-        .get(`/users`)
+        .get(`/sa/users`)
         .auth('admin', 'qwerty')
         .expect(HttpStatus.OK);
     }

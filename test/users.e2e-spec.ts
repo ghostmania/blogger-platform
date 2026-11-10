@@ -67,7 +67,7 @@ describe('users', () => {
 
   it('should return 401 while creating user without basic auth', async () => {
     await request(app.getHttpServer())
-      .post(`/users`)
+      .post(`/sa/users`)
       .send({
         login: 'name1',
         password: 'qwerty123',
@@ -78,7 +78,7 @@ describe('users', () => {
 
   it('should return 401 with wrong basic auth credentials', async () => {
     await request(app.getHttpServer())
-      .post(`/users`)
+      .post(`/sa/users`)
       .send({
         login: 'name1',
         password: 'qwerty123',
@@ -90,7 +90,7 @@ describe('users', () => {
 
   it('should return validation errors while creating user with incorrect input', async () => {
     const { body: responseBody } = await request(app.getHttpServer())
-      .post(`/users`)
+      .post(`/sa/users`)
       .send({ login: 'ab', password: '123', email: 'not-an-email' })
       .auth('admin', 'qwerty')
       .expect(HttpStatus.BAD_REQUEST);
@@ -115,7 +115,7 @@ describe('users', () => {
     await userTestManger.createUser(body);
 
     const { body: sameLoginBody } = await request(app.getHttpServer())
-      .post(`/users`)
+      .post(`/sa/users`)
       .send({ ...body, email: 'other@email.em' })
       .auth('admin', 'qwerty')
       .expect(HttpStatus.BAD_REQUEST);
@@ -124,7 +124,7 @@ describe('users', () => {
     ]);
 
     const { body: sameEmailBody } = await request(app.getHttpServer())
-      .post(`/users`)
+      .post(`/sa/users`)
       .send({ ...body, login: 'other' })
       .auth('admin', 'qwerty')
       .expect(HttpStatus.BAD_REQUEST);
@@ -136,7 +136,7 @@ describe('users', () => {
   it('should get users with paging', async () => {
     const users = await userTestManger.createSeveralUsers(12);
     const { body: responseBody } = (await request(app.getHttpServer())
-      .get(`/users?pageNumber=2&sortDirection=asc`)
+      .get(`/sa/users?pageNumber=2&sortDirection=asc`)
       .auth('admin', 'qwerty')
       .expect(HttpStatus.OK)) as { body: PaginatedViewDto<UserViewDto[]> };
 
@@ -149,7 +149,7 @@ describe('users', () => {
 
   it('should return 401 while getting users without basic auth', async () => {
     await request(app.getHttpServer())
-      .get(`/users`)
+      .get(`/sa/users`)
       .expect(HttpStatus.UNAUTHORIZED);
   });
 
@@ -161,12 +161,12 @@ describe('users', () => {
     });
 
     await request(app.getHttpServer())
-      .delete(`/users/${user.id}`)
+      .delete(`/sa/users/${user.id}`)
       .auth('admin', 'qwerty')
       .expect(HttpStatus.NO_CONTENT);
 
     const { body: responseBody } = await request(app.getHttpServer())
-      .get(`/users`)
+      .get(`/sa/users`)
       .auth('admin', 'qwerty')
       .expect(HttpStatus.OK);
     expect(responseBody.totalCount).toBe(0);
@@ -174,22 +174,19 @@ describe('users', () => {
 
   it('should return 404 while deleting non existent user', async () => {
     const { body: responseBody } = await request(app.getHttpServer())
-      .delete(`/users/${NON_EXISTENT_ID}`)
+      .delete(`/sa/users/${NON_EXISTENT_ID}`)
       .auth('admin', 'qwerty')
       .expect(HttpStatus.NOT_FOUND);
 
     expect(responseBody.code).toBe(DomainExceptionCode.NotFound);
   });
 
-  it('should return 400 while deleting user with invalid ID', async () => {
-    const { body: responseBody } = await request(app.getHttpServer())
-      .delete(`/users/not-an-object-id`)
+  //невалидный id трактуется как «не найдено»: формат проверяется до обращения к БД
+  it('should return 404 while deleting user with invalid ID', async () => {
+    await request(app.getHttpServer())
+      .delete(`/sa/users/not-an-object-id`)
       .auth('admin', 'qwerty')
-      .expect(HttpStatus.BAD_REQUEST);
-
-    expect(responseBody.errorsMessages).toEqual([
-      { message: expect.any(String), field: expect.any(String) },
-    ]);
+      .expect(HttpStatus.NOT_FOUND);
   });
 
   it('should return users info while "me" request with correct accessTokens', async () => {

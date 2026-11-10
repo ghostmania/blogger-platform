@@ -38,7 +38,7 @@ describe('auth', () => {
       await userTestManger.registerUser(userInput);
 
       const { body: responseBody } = await request(app.getHttpServer())
-        .get(`/users`)
+        .get(`/sa/users`)
         .auth('admin', 'qwerty')
         .expect(HttpStatus.OK);
 
