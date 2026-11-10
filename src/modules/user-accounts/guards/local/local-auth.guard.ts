@@ -18,9 +18,9 @@ export class LocalAuthGuard extends AuthGuard('local') {
     user: UserContextDto | false | null,
     info: unknown,
   ): TUser {
-    if (err) {
-      //DomainException, бросенный из LocalStrategy.validate
-      throw err instanceof Error ? err : new Error('Authentication failed');
+    //DomainException из LocalStrategy.validate уже несёт нужный код — пробрасываем как есть
+    if (err instanceof Error) {
+      throw err;
     }
 
     if (user) {

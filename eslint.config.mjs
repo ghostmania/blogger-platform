@@ -39,7 +39,7 @@ export default tseslint.config(
   },
   {
     //в e2e тела ответов supertest — any; типизировать каждый body нет смысла
-    files: ['test/**/*.ts', 'src/**/*.spec.ts'],
+    files: ['test/**/*.ts'],
     rules: {
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',

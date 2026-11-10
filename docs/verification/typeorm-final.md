@@ -48,3 +48,42 @@ E2E: **11 suites, 191 passed, 0 skipped — PASS** (81.6 s). Suite
 подряд логинов не дают 429, а access-токен живёт не меньше 300 секунд.
 
 Не проверялось: внешняя автопроверка инкубатора, деплой, SMTP.
+
+## Ревью (две оси: стандарты и спек)
+
+Подтверждённые и исправленные замечания:
+
+- Устаревшие комментарии: `AuthQueryRepository` и `UsersExternalQueryRepository`
+  ссылались на «контракт» репозитория, `poolOptions` — на «два пула (pg Pool
+  и TypeORM)»; заголовок спеки констант токенов привязан к этапу. Исправлены.
+- `LocalAuthGuard` оборачивал не-`Error` в `new Error('Authentication
+  failed')` — вводящее в заблуждение сообщение ради `only-throw-error`;
+  теперь та же политика, что в `RefreshTokenAuthGuard`: `Error`
+  пробрасывается, остальное — 401.
+- `AllHttpExceptionsFilter` после типизации брал `message` только у `Error`;
+  объект с `message` снова читается (поведение до этапа восстановлено).
+- Три декоратора параметров повторяли `Request & { user?: X }` с одинаковым
+  комментарием — вынесен тип `AuthenticatedRequest<T>`.
+- Отключение `no-unsafe-*` сужено до `test/**` (в `src/**/*.spec.ts`
+  необходимости нет); `argsIgnorePattern: '^_'` оставлен — нужен
+  `TypeOrmThrottlerStorage`.
+- `init-settings` собирал опции `DataSource` руками — теперь через общий
+  `postgresOptions()`, как `db:init` и `AppModule`.
+- `api-conformance`: пустое тело логина больше не фиксирует единственное поле
+  `loginOrEmail` (особенность passport-local), проверяется наличие поля в
+  `errorsMessages`; дефолтная сортировка «новые первыми» проверяется на всех
+  списках (блоги, посты блога, посты, комментарии), а не только на `/sa/users`
+  и `/posts`; JWT декодируется через `JwtService`, как в остальных спеках;
+  повторы `[MISSING_ID, ...MALFORMED_IDS]`, `as Array<[Method, string]>`
+  и `asAdmin ? admin(req) : req` сведены к константе, generic `it.each`
+  и helper `maybeAdmin`.
+
+Отклонено (осознанно): перевод `api-conformance` на `UsersTestManager` —
+спека намеренно самодостаточна, как `typeorm-*`; удаление
+`bootstrap().catch(...)` в `main.ts` — явный выход с кодом 1 при ошибке
+старта полезен; проверки порядка устройств и полей ошибок — порядок
+детерминирован и уже проверяется другими спеками; `id-validation.pipe`
+удалён как мёртвый код после `/users`.
+
+После правок: `yarn lint`, `tsc`, `yarn build` без ошибок; полный e2e —
+**11 suites, 191 passed — PASS** (83.4 s).

@@ -8,6 +8,7 @@ import { EmailService } from '../../src/modules/notifications/email.service';
 import { EmailServiceMock } from '../mock/email-service.mock';
 import { applySchema } from '../../src/core/database/apply-schema';
 import { DataSource } from 'typeorm';
+import { postgresOptions } from '../../src/core/database/postgres-options';
 
 // Each suite owns a schema in an explicitly selected test database.
 export const initSettings = async (
@@ -36,8 +37,7 @@ export const initSettings = async (
     //схема применяется тем же способом, что и yarn db:init — через TypeORM
     const schemaSource = new DataSource({
       type: 'postgres',
-      url: url.toString(),
-      ssl,
+      ...postgresOptions(),
     });
     await schemaSource.initialize();
     try {

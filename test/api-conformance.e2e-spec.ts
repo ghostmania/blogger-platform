@@ -1,4 +1,5 @@
 import { INestApplication, HttpStatus } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import request from 'supertest';
 import { initSettings } from './helpers/init-settings';
 import { deleteAllData } from './helpers/delete-all-data';
@@ -25,6 +26,7 @@ type Method = 'get' | 'post' | 'put' | 'delete';
 const MISSING_ID = '9223372036854775807';
 //нечисловой и за пределами int8 → тоже 404, а не 500
 const MALFORMED_IDS = ['not-an-id', '9223372036854775808'];
+const UNKNOWN_IDS = [MISSING_ID, ...MALFORMED_IDS];
 const MISSING_DEVICE_ID = '2e2e0000-0000-4000-8000-000000000000';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
@@ -106,6 +108,9 @@ describe('API conformance (public + super admin)', () => {
     req.auth(token, { type: 'bearer' });
   const withCookie = (req: request.Test, refreshToken: string) =>
     req.set('Cookie', refreshTokenCookie(refreshToken));
+  //один и тот же сценарий для публичного и админского пути
+  const maybeAdmin = (req: request.Test, asAdmin: boolean) =>
+    asAdmin ? admin(req) : req;
 
   //сид для сценариев: юзер с парой токенов, блог, пост, комментарий
   const createUser = async (login: string) => {
@@ -161,7 +166,7 @@ describe('API conformance (public + super admin)', () => {
   });
 
   describe('routes outside the contract are absent', () => {
-    it.each([
+    it.each<[Method, string]>([
       ['get', '/users'],
       ['post', '/users'],
       ['get', '/users/1'],
@@ -171,18 +176,15 @@ describe('API conformance (public + super admin)', () => {
       ['put', '/blogs/1'],
       ['delete', '/blogs/1'],
       ['get', '/app'],
-    ] as Array<[Method, string]>)(
-      '%s %s -> 404 even for the super admin',
-      async (method, path) => {
-        await admin(request(server())[method](path))
-          .send({})
-          .expect(HttpStatus.NOT_FOUND);
-      },
-    );
+    ])('%s %s -> 404 even for the super admin', async (method, path) => {
+      await admin(request(server())[method](path))
+        .send({})
+        .expect(HttpStatus.NOT_FOUND);
+    });
   });
 
   describe('super admin api requires basic auth admin:qwerty', () => {
-    it.each([
+    it.each<[Method, string]>([
       ['get', '/sa/users'],
       ['post', '/sa/users'],
       ['delete', `/sa/users/${MISSING_ID}`],
@@ -194,7 +196,7 @@ describe('API conformance (public + super admin)', () => {
       ['post', `/sa/blogs/${MISSING_ID}/posts`],
       ['put', `/sa/blogs/${MISSING_ID}/posts/${MISSING_ID}`],
       ['delete', `/sa/blogs/${MISSING_ID}/posts/${MISSING_ID}`],
-    ] as Array<[Method, string]>)(
+    ])(
       '%s %s -> 401 without credentials and with wrong ones',
       async (method, path) => {
         await request(server())[method](path).send({}).expect(401);
@@ -208,14 +210,14 @@ describe('API conformance (public + super admin)', () => {
   });
 
   describe('public write endpoints require a bearer access token', () => {
-    it.each([
+    it.each<[Method, string]>([
       ['get', '/auth/me'],
       ['put', `/posts/${MISSING_ID}/like-status`],
       ['post', `/posts/${MISSING_ID}/comments`],
       ['put', `/comments/${MISSING_ID}`],
       ['delete', `/comments/${MISSING_ID}`],
       ['put', `/comments/${MISSING_ID}/like-status`],
-    ] as Array<[Method, string]>)(
+    ])(
       '%s %s -> 401 without a token and with a garbage token',
       async (method, path) => {
         await request(server())[method](path).send({}).expect(401);
@@ -227,13 +229,13 @@ describe('API conformance (public + super admin)', () => {
   });
 
   describe('refresh-token endpoints require the refreshToken cookie', () => {
-    it.each([
+    it.each<[Method, string]>([
       ['post', '/auth/refresh-token'],
       ['post', '/auth/logout'],
       ['get', '/security/devices'],
       ['delete', '/security/devices'],
       ['delete', `/security/devices/${MISSING_DEVICE_ID}`],
-    ] as Array<[Method, string]>)(
+    ])(
       '%s %s -> 401 without the cookie and with a garbage cookie',
       async (method, path) => {
         await request(server())[method](path).expect(401);
@@ -272,7 +274,6 @@ describe('API conformance (public + super admin)', () => {
       ['post', '/auth/registration-email-resending', ['email'], false],
       ['post', '/auth/password-recovery', ['email'], false],
       ['post', '/auth/new-password', ['newPassword', 'recoveryCode'], false],
-      ['post', '/auth/login', ['loginOrEmail'], false],
     ];
     it.each(bodyCases)(
       '%s %s with an empty body -> 400 listing %j',
@@ -285,8 +286,10 @@ describe('API conformance (public + super admin)', () => {
         const path = template
           .replace('{blogId}', blog?.id ?? '')
           .replace('{postId}', post?.id ?? '');
-        const req = request(server())[method](path);
-        const { body } = await (asAdmin ? admin(req) : req)
+        const { body } = await maybeAdmin(
+          request(server())[method](path),
+          asAdmin,
+        )
           .send({})
           .expect(400);
         expect(body).toEqual({
@@ -297,6 +300,19 @@ describe('API conformance (public + super admin)', () => {
         });
       },
     );
+
+    //гард логина отрабатывает до ValidationPipe: важно, что это 400 с полем, а не 401
+    it('post /auth/login with an empty body -> 400 naming a missing field', async () => {
+      const { body } = await request(server())
+        .post('/auth/login')
+        .send({})
+        .expect(400);
+      expect(body.errorsMessages).toEqual(
+        expect.arrayContaining([
+          { message: expect.any(String), field: 'loginOrEmail' },
+        ]),
+      );
+    });
 
     it('bearer-protected bodies are validated after auth: content and likeStatus', async () => {
       const user = await createUser('author');
@@ -358,16 +374,16 @@ describe('API conformance (public + super admin)', () => {
     it('duplicate login or email on POST /sa/users and /auth/registration -> 400 with the field', async () => {
       await createUser('taken');
       for (const path of ['/sa/users', '/auth/registration']) {
-        const req = request(server()).post(path);
-        const { body } = await (path.startsWith('/sa') ? admin(req) : req)
+        const asAdmin = path.startsWith('/sa');
+        const { body } = await maybeAdmin(request(server()).post(path), asAdmin)
           .send({ login: 'taken', email: 'fresh@example.com', password })
           .expect(400);
         expect(body).toEqual({
           errorsMessages: [{ message: expect.any(String), field: 'login' }],
         });
-        const sameEmail = request(server()).post(path);
-        const { body: emailBody } = await (
-          path.startsWith('/sa') ? admin(sameEmail) : sameEmail
+        const { body: emailBody } = await maybeAdmin(
+          request(server()).post(path),
+          asAdmin,
         )
           .send({ login: 'fresh', email: 'taken@example.com', password })
           .expect(400);
@@ -443,7 +459,7 @@ describe('API conformance (public + super admin)', () => {
       await admin(request(server()).get('/sa/users'))
         .expect(200)
         .expect(({ body }) => expect(body.totalCount).toBe(0));
-      for (const id of [MISSING_ID, ...MALFORMED_IDS]) {
+      for (const id of UNKNOWN_IDS) {
         await admin(request(server()).delete(`/sa/users/${id}`)).expect(404);
       }
     });
@@ -454,9 +470,9 @@ describe('API conformance (public + super admin)', () => {
       const blog = await createBlog();
       expect(blog).toEqual({ ...blogShape, ...blogInput, isMembership: false });
       for (const path of ['/sa/blogs', '/blogs']) {
-        const req = request(server()).get(path);
-        const { body } = await (
-          path.startsWith('/sa') ? admin(req) : req
+        const { body } = await maybeAdmin(
+          request(server()).get(path),
+          path.startsWith('/sa'),
         ).expect(200);
         expect(body).toEqual(paginator([blog]));
       }
@@ -466,13 +482,20 @@ describe('API conformance (public + super admin)', () => {
       expect(body).toEqual(blog);
     });
 
-    it('GET /blogs and GET /sa/blogs: searchNameTerm (case-insensitive), sortBy name asc, pagination', async () => {
+    it('GET /blogs and GET /sa/blogs: newest first by default, searchNameTerm (case-insensitive), sortBy name asc, pagination', async () => {
       for (const name of ['Alpha', 'beta', 'alphabet']) {
         await createBlog({ name });
       }
       for (const path of ['/blogs', '/sa/blogs']) {
-        const req = request(server()).get(path);
-        const { body } = await (path.startsWith('/sa') ? admin(req) : req)
+        const asAdmin = path.startsWith('/sa');
+        const defaults = await maybeAdmin(
+          request(server()).get(path),
+          asAdmin,
+        ).expect(200);
+        expect(
+          defaults.body.items.map((b: { name: string }) => b.name),
+        ).toEqual(['alphabet', 'beta', 'Alpha']);
+        const { body } = await maybeAdmin(request(server()).get(path), asAdmin)
           .query({
             searchNameTerm: 'ALPH',
             sortBy: 'name',
@@ -522,7 +545,7 @@ describe('API conformance (public + super admin)', () => {
       expect(list.body).toEqual(paginator([]));
     });
 
-    it.each([MISSING_ID, ...MALFORMED_IDS])(
+    it.each(UNKNOWN_IDS)(
       'unknown blog id %s -> 404 on GET /blogs/:id, GET /blogs/:id/posts, GET/POST /sa/blogs/:id/posts, PUT/DELETE /sa/blogs/:id',
       async (id) => {
         await request(server()).get(`/blogs/${id}`).expect(404);
@@ -554,8 +577,10 @@ describe('API conformance (public + super admin)', () => {
         [`/blogs/${blog.id}/posts`, false],
         ['/posts', false],
       ] as Array<[string, boolean]>) {
-        const req = request(server()).get(path);
-        const { body } = await (asAdmin ? admin(req) : req).expect(200);
+        const { body } = await maybeAdmin(
+          request(server()).get(path),
+          asAdmin,
+        ).expect(200);
         expect(body).toEqual(paginator([post]));
       }
       const { body } = await request(server())
@@ -569,10 +594,19 @@ describe('API conformance (public + super admin)', () => {
       for (const title of ['b', 'c', 'a']) {
         await createPost(blog.id, { title });
       }
-      const defaults = await request(server()).get('/posts').expect(200);
-      expect(
-        defaults.body.items.map((p: { title: string }) => p.title),
-      ).toEqual(['a', 'c', 'b']);
+      for (const [path, asAdmin] of [
+        [`/sa/blogs/${blog.id}/posts`, true],
+        [`/blogs/${blog.id}/posts`, false],
+        ['/posts', false],
+      ] as Array<[string, boolean]>) {
+        const defaults = await maybeAdmin(
+          request(server()).get(path),
+          asAdmin,
+        ).expect(200);
+        expect(
+          defaults.body.items.map((p: { title: string }) => p.title),
+        ).toEqual(['a', 'c', 'b']);
+      }
       const sorted = await request(server())
         .get(`/blogs/${blog.id}/posts`)
         .query({ sortBy: 'title', sortDirection: 'asc', pageSize: 2 })
@@ -645,7 +679,7 @@ describe('API conformance (public + super admin)', () => {
       await admin(
         request(server()).delete(`/sa/blogs/${otherBlog.id}/posts/${post.id}`),
       ).expect(404);
-      for (const id of [MISSING_ID, ...MALFORMED_IDS]) {
+      for (const id of UNKNOWN_IDS) {
         await admin(request(server()).put(`/sa/blogs/${blog.id}/posts/${id}`))
           .send(postInput)
           .expect(404);
@@ -655,7 +689,7 @@ describe('API conformance (public + super admin)', () => {
       }
     });
 
-    it.each([MISSING_ID, ...MALFORMED_IDS])(
+    it.each(UNKNOWN_IDS)(
       'unknown post id %s -> 404 on GET /posts/:id, GET/POST /posts/:id/comments, PUT /posts/:id/like-status',
       async (id) => {
         const user = await createUser('reader');
@@ -711,7 +745,7 @@ describe('API conformance (public + super admin)', () => {
   });
 
   describe('comments', () => {
-    it('POST /posts/:postId/comments -> 201 CommentViewModel; GET /posts/:postId/comments -> Paginator; GET /comments/:id', async () => {
+    it('POST /posts/:postId/comments -> 201 CommentViewModel; GET /posts/:postId/comments -> Paginator newest first; GET /comments/:id', async () => {
       const user = await createUser('author');
       const blog = await createBlog();
       const post = await createPost(blog.id);
@@ -721,10 +755,11 @@ describe('API conformance (public + super admin)', () => {
         content: commentContent,
         commentatorInfo: { userId: user.id, userLogin: user.login },
       });
+      const newer = await createComment(post.id, user.accessToken);
       const list = await request(server())
         .get(`/posts/${post.id}/comments`)
         .expect(200);
-      expect(list.body).toEqual(paginator([comment]));
+      expect(list.body).toEqual(paginator([newer, comment]));
       const single = await request(server())
         .get(`/comments/${comment.id}`)
         .expect(200);
@@ -773,7 +808,7 @@ describe('API conformance (public + super admin)', () => {
       expect(list.body).toEqual(paginator([]));
     });
 
-    it.each([MISSING_ID, ...MALFORMED_IDS])(
+    it.each(UNKNOWN_IDS)(
       'unknown comment id %s -> 404 on GET, PUT, DELETE /comments/:id and PUT /comments/:id/like-status',
       async (id) => {
         const user = await createUser('reader');
@@ -978,10 +1013,10 @@ describe('API conformance (public + super admin)', () => {
           .expect(200);
         accessToken = body.accessToken;
       }
-      const [, payload] = accessToken.split('.');
-      const { exp, iat } = JSON.parse(
-        Buffer.from(payload, 'base64url').toString(),
-      ) as { exp: number; iat: number };
+      const { exp, iat } = new JwtService().decode<{
+        exp: number;
+        iat: number;
+      }>(accessToken);
       expect(exp - iat).toBeGreaterThanOrEqual(300);
     });
   });

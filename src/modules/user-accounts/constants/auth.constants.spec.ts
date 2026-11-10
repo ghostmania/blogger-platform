@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 type Constants = typeof import('./auth.constants');
 type TtlConstant = 'ACCESS_TOKEN_EXPIRES_IN' | 'REFRESH_TOKEN_EXPIRES_IN';
 
-describe('auth token defaults (TypeORM blogs/posts stage)', () => {
+describe('auth token defaults', () => {
   it.each([
     ['ACCESS_TOKEN_TTL', 'ACCESS_TOKEN_EXPIRES_IN', 300],
     ['REFRESH_TOKEN_TTL', 'REFRESH_TOKEN_EXPIRES_IN', 20],

@@ -27,14 +27,25 @@ export class AllHttpExceptionsFilter implements ExceptionFilter {
     }
 
     //Если сработал этот фильтр, то пользователю улетит 500я ошибка
-    const message =
-      exception instanceof Error && exception.message
-        ? exception.message
-        : 'Unknown exception occurred.';
+    const message = this.extractMessage(exception);
     const status = HttpStatus.INTERNAL_SERVER_ERROR;
     const responseBody = this.buildResponseBody(request.url, message);
 
     response.status(status).json(responseBody);
+  }
+
+  //сюда может прилететь не только Error, но и любой объект с message
+  private extractMessage(exception: unknown): string {
+    if (
+      typeof exception === 'object' &&
+      exception !== null &&
+      'message' in exception &&
+      typeof exception.message === 'string' &&
+      exception.message
+    ) {
+      return exception.message;
+    }
+    return 'Unknown exception occurred.';
   }
 
   private buildResponseBody(

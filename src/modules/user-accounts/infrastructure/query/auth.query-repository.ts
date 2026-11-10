@@ -3,9 +3,8 @@ import { MeViewDto } from '../../api/view-dto/users.view-dto';
 import { UsersTypeOrmRepository } from '../typeorm/users.typeorm-repository';
 
 /**
- * Этот репозиторий НЕ дублируется под SQL: он работает через контракт
- * UsersTypeOrmRepository и не знает, какая база под ним. Наглядный пример того,
- * что при смене хранилища переписывать приходится далеко не всё.
+ * Не ходит в базу сам: читает пользователя через UsersTypeOrmRepository
+ * и только собирает view для /auth/me.
  */
 @Injectable()
 export class AuthQueryRepository {

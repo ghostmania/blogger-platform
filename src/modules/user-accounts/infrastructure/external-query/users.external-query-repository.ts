@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UsersTypeOrmRepository } from '../typeorm/users.typeorm-repository';
 import { UserExternalDto } from './external-dto/users.external-dto';
 
-//как и AuthQueryRepository, работает через контракт и не дублируется под SQL
+//как и AuthQueryRepository, читает через UsersTypeOrmRepository и только собирает внешний dto
 @Injectable()
 export class UsersExternalQueryRepository {
   constructor(private usersRepository: UsersTypeOrmRepository) {}

@@ -1,13 +1,12 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { Request } from 'express';
+import { AuthenticatedRequest } from '../../authenticated-request.type';
 import { UserContextDto } from '../../dto/user-context.dto';
 
 export const ExtractUserIfExistsFromRequest = createParamDecorator(
   (data: unknown, context: ExecutionContext): UserContextDto | null => {
-    //user кладёт passport-стратегия; типизируем request, чтобы не тащить any
     const request = context
       .switchToHttp()
-      .getRequest<Request & { user?: UserContextDto }>();
+      .getRequest<AuthenticatedRequest<UserContextDto>>();
 
     const user = request.user;
 

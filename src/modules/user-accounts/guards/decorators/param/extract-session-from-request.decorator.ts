@@ -1,14 +1,13 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { Request } from 'express';
+import { AuthenticatedRequest } from '../../authenticated-request.type';
 import { RefreshTokenContextDto } from '../../dto/refresh-token-context.dto';
 
 //достаёт из запроса пользователя вместе с deviceId (кладёт RefreshTokenStrategy)
 export const ExtractSessionFromRequest = createParamDecorator(
   (data: unknown, context: ExecutionContext): RefreshTokenContextDto => {
-    //user кладёт passport-стратегия; типизируем request, чтобы не тащить any
     const request = context
       .switchToHttp()
-      .getRequest<Request & { user?: RefreshTokenContextDto }>();
+      .getRequest<AuthenticatedRequest<RefreshTokenContextDto>>();
 
     const user = request.user;
 
