@@ -1,4 +1,3 @@
-import { UpdateUserDto } from '../dto/create-user.dto';
 import { Name } from './name.embedded';
 import { EmailConfirmation } from './email-confirmation.embedded';
 import { PasswordRecovery } from './password-recovery.embedded';
@@ -15,7 +14,6 @@ export interface UserEntity {
   updatedAt: Date;
   deletedAt: Date | null;
 
-  update(dto: UpdateUserDto): void;
   makeDeleted(): void;
   setConfirmationCode(code: string, expirationDate: Date): void;
   confirmEmail(): void;

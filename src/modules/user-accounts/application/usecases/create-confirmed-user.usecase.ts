@@ -19,10 +19,9 @@ export class CreateConfirmedUserUseCase implements ICommandHandler<
   ) {}
 
   async execute({ dto }: CreateConfirmedUserCommand): Promise<string> {
-    const userId = await this.commandBus.execute<
-      CreateUserCommand,
-      string
-    >(new CreateUserCommand(dto));
+    const userId = await this.commandBus.execute<CreateUserCommand, string>(
+      new CreateUserCommand(dto),
+    );
 
     const user = await this.usersRepository.findOrNotFoundFail(userId);
 

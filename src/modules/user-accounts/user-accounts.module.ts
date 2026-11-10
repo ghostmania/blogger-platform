@@ -4,7 +4,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 
 import { User } from './domain/user.entity';
-import { UsersController } from './api/users.controller';
 import { AuthController } from './api/auth.controller';
 import { SecurityDevicesController } from './api/security-devices.controller';
 
@@ -27,7 +26,6 @@ import { UserEmailNotifier } from './application/user-email-notifier.service';
 
 import { CreateUserUseCase } from './application/usecases/create-user.usecase';
 import { CreateConfirmedUserUseCase } from './application/usecases/create-confirmed-user.usecase';
-import { UpdateUserUseCase } from './application/usecases/update-user.usecase';
 import { DeleteUserUseCase } from './application/usecases/delete-user.usecase';
 import { RegisterUserUseCase } from './application/usecases/register-user.usecase';
 import { ConfirmRegistrationUseCase } from './application/usecases/confirm-registration.usecase';
@@ -63,7 +61,6 @@ import {
 const commandHandlers = [
   CreateUserUseCase,
   CreateConfirmedUserUseCase,
-  UpdateUserUseCase,
   DeleteUserUseCase,
   RegisterUserUseCase,
   ConfirmRegistrationUseCase,
@@ -123,7 +120,7 @@ const tokenStrategies = [
     TypeOrmModule.forFeature([User, DeviceSession]),
     NotificationsModule,
   ],
-  controllers: [UsersController, AuthController, SecurityDevicesController],
+  controllers: [AuthController, SecurityDevicesController],
   providers: [
     ...persistenceProviders,
     AuthQueryRepository,

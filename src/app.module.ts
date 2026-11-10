@@ -3,8 +3,6 @@ import { IpRestriction } from './core/rate-limiting/ip-restriction.entity';
 import { RateLimitingModule } from './core/rate-limiting/rate-limiting.module';
 import { TypeOrmThrottlerStorage } from './core/rate-limiting/typeorm-throttler-storage';
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { UserAccountsModule } from './modules/user-accounts/user-accounts.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { poolOptions, postgresOptions } from './core/database/postgres-options';
@@ -76,9 +74,7 @@ import { CommentLike } from './modules/bloggers-platform/likes/domain/comment-li
     CoreModule,
     SadminModule,
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
     //регистрация глобальных exception filters
     //важен порядок регистрации! Первым сработает DomainHttpExceptionsFilter!
     {

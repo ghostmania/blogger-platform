@@ -102,34 +102,4 @@ export class PostsController {
 
     return this.queryBus.execute(new GetCommentByIdQuery(commentId, user.id));
   }
-
-  // @ApiBasicAuth('basicAuth')
-  // @UseGuards(BasicAuthGuard)
-  // @Post()
-  // async createPost(@Body() body: CreatePostInputDto): Promise<PostViewDto> {
-  //   const postId = await this.commandBus.execute<CreatePostCommand, string>(
-  //     new CreatePostCommand(body),
-  //   );
-  //
-  //   return this.queryBus.execute(new GetPostByIdQuery(postId, null));
-  // }
-  //
-  // @ApiBasicAuth('basicAuth')
-  // @UseGuards(BasicAuthGuard)
-  // @Put(':id')
-  // @HttpCode(HttpStatus.NO_CONTENT)
-  // async updatePost(
-  //   @Param('id') id: string,
-  //   @Body() body: UpdatePostInputDto,
-  // ): Promise<void> {
-  //   return this.commandBus.execute(new UpdatePostCommand(id, body));
-  // }
-  //
-  // @ApiBasicAuth('basicAuth')
-  // @UseGuards(BasicAuthGuard)
-  // @Delete(':id')
-  // @HttpCode(HttpStatus.NO_CONTENT)
-  // async deletePost(@Param('id') id: string): Promise<void> {
-  //   return this.commandBus.execute(new DeletePostCommand(id));
-  // }
 }

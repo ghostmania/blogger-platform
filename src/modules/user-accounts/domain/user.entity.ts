@@ -7,7 +7,6 @@ import {
   DeleteDateColumn,
   Index,
 } from 'typeorm';
-import { UpdateUserDto } from '../dto/create-user.dto';
 import { CreateUserDomainDto } from './dto/create-user.domain.dto';
 import { Name } from './name.embedded';
 import { EmailConfirmation } from './email-confirmation.embedded';
@@ -77,13 +76,6 @@ export class User implements UserEntity {
       throw new Error('Entity already deleted');
     }
     this.deletedAt = new Date();
-  }
-
-  update(dto: UpdateUserDto): void {
-    if (dto.email !== this.email) {
-      this.emailConfirmation.isConfirmed = false;
-      this.email = dto.email;
-    }
   }
 
   setConfirmationCode(code: string, expirationDate: Date): void {
