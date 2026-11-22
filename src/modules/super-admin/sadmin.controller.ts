@@ -40,6 +40,16 @@ import { GetPostByIdQuery } from '../bloggers-platform/posts/application/queries
 import { CreatePostForBlogCommand } from '../bloggers-platform/posts/application/usecases/create-post-for-blog.usecase';
 import { UpdatePostForBlogCommand } from '../bloggers-platform/posts/application/usecases/update-post-for-blog.usecase';
 import { DeletePostForBlogCommand } from '../bloggers-platform/posts/application/usecases/delete-post-for-blog.usecase';
+import { GetQuestionsQueryParams } from '../bloggers-platform/questions/api/input-dto/get-questions-query-params.input-dto';
+import { QuestionInputDto } from '../bloggers-platform/questions/api/input-dto/question.input-dto';
+import { PublishQuestionInputDto } from '../bloggers-platform/questions/api/input-dto/publish-question.input-dto';
+import { QuestionViewDto } from '../bloggers-platform/questions/api/view-dto/questions.view-dto';
+import { GetQuestionsQuery } from '../bloggers-platform/questions/application/queries/get-questions.query-handler';
+import { GetQuestionByIdQuery } from '../bloggers-platform/questions/application/queries/get-question-by-id.query-handler';
+import { CreateQuestionCommand } from '../bloggers-platform/questions/application/usecases/create-question.usecase';
+import { UpdateQuestionCommand } from '../bloggers-platform/questions/application/usecases/update-question.usecase';
+import { DeleteQuestionCommand } from '../bloggers-platform/questions/application/usecases/delete-question.usecase';
+import { PublishQuestionCommand } from '../bloggers-platform/questions/application/usecases/publish-question.usecase';
 
 //все эндпоинты суперадмина — под basic auth (admin:qwerty)
 @Controller('sa')
@@ -155,6 +165,56 @@ export class SadminController {
   ): Promise<void> {
     return this.commandBus.execute(
       new DeletePostForBlogCommand(blogId, postId),
+    );
+  }
+
+  // ---------- quiz questions ----------
+
+  @Get('quiz/questions')
+  async getAllQuestions(
+    @Query() query: GetQuestionsQueryParams,
+  ): Promise<PaginatedViewDto<QuestionViewDto[]>> {
+    return this.queryBus.execute(new GetQuestionsQuery(query));
+  }
+
+  @Post('quiz/questions')
+  async createQuestion(
+    @Body() body: QuestionInputDto,
+  ): Promise<QuestionViewDto> {
+    const questionId = await this.commandBus.execute<
+      CreateQuestionCommand,
+      string
+    >(new CreateQuestionCommand(body));
+
+    return this.queryBus.execute(new GetQuestionByIdQuery(questionId));
+  }
+
+  @ApiParam({ name: 'id' })
+  @Delete('quiz/questions/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteQuestion(@Param('id') id: string): Promise<void> {
+    return this.commandBus.execute(new DeleteQuestionCommand(id));
+  }
+
+  @ApiParam({ name: 'id' })
+  @Put('quiz/questions/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async updateQuestion(
+    @Param('id') id: string,
+    @Body() body: QuestionInputDto,
+  ): Promise<void> {
+    return this.commandBus.execute(new UpdateQuestionCommand(id, body));
+  }
+
+  @ApiParam({ name: 'id' })
+  @Put('quiz/questions/:id/publish')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async publishQuestion(
+    @Param('id') id: string,
+    @Body() body: PublishQuestionInputDto,
+  ): Promise<void> {
+    return this.commandBus.execute(
+      new PublishQuestionCommand(id, body.published),
     );
   }
 }

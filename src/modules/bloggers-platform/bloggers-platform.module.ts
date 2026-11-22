@@ -42,6 +42,12 @@ import { GetCommentByIdQueryHandler } from './comments/application/queries/get-c
 import { GetPostCommentsQueryHandler } from './comments/application/queries/get-post-comments.query-handler';
 import { QuestionsTypeOrmRepository } from './questions/infrastructure/typeorm/questions.typeorm-repository';
 import { QuestionsTypeOrmQueryRepository } from './questions/infrastructure/typeorm/query/questions.typeorm-query-repository';
+import { CreateQuestionUseCase } from './questions/application/usecases/create-question.usecase';
+import { UpdateQuestionUseCase } from './questions/application/usecases/update-question.usecase';
+import { DeleteQuestionUseCase } from './questions/application/usecases/delete-question.usecase';
+import { PublishQuestionUseCase } from './questions/application/usecases/publish-question.usecase';
+import { GetQuestionsQueryHandler } from './questions/application/queries/get-questions.query-handler';
+import { GetQuestionByIdQueryHandler } from './questions/application/queries/get-question-by-id.query-handler';
 
 //command handlers (use cases) — пишущая половина CQRS
 const commandHandlers = [
@@ -56,6 +62,10 @@ const commandHandlers = [
   UpdateCommentUseCase,
   DeleteCommentUseCase,
   UpdateCommentLikeStatusUseCase,
+  CreateQuestionUseCase,
+  UpdateQuestionUseCase,
+  DeleteQuestionUseCase,
+  PublishQuestionUseCase,
 ];
 
 //query handlers — читающая половина CQRS, работают только с query-репозиториями
@@ -67,6 +77,8 @@ const queryHandlers = [
   GetPostByIdQueryHandler,
   GetCommentByIdQueryHandler,
   GetPostCommentsQueryHandler,
+  GetQuestionsQueryHandler,
+  GetQuestionByIdQueryHandler,
 ];
 
 //весь модуль на TypeORM: raw SQL здесь больше не используется
