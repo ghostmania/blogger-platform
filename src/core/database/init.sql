@@ -146,3 +146,12 @@ CREATE TABLE IF NOT EXISTS ip_restrictions (
   key varchar(255) PRIMARY KEY,
   hits jsonb NOT NULL DEFAULT '[]'::jsonb
 );
+
+CREATE TABLE IF NOT EXISTS quiz_questions (
+  id               bigserial    PRIMARY KEY,
+  body             varchar(500) NOT NULL,
+  correct_answers  jsonb        NOT NULL DEFAULT '[]',
+  published        boolean      NOT NULL DEFAULT false,
+  created_at       timestamptz  NOT NULL DEFAULT now(),
+  updated_at       timestamptz  NULL
+);

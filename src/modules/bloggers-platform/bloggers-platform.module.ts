@@ -7,6 +7,7 @@ import { Post } from './posts/domain/post.entity';
 import { Comment } from './comments/domain/comment.entity';
 import { PostLike } from './likes/domain/post-like.entity';
 import { CommentLike } from './likes/domain/comment-like.entity';
+import { Question } from './questions/domain/question.entity';
 
 import { BlogsController } from './blogs/api/blogs.controller';
 import { PostsController } from './posts/api/posts.controller';
@@ -39,6 +40,8 @@ import { GetPostsQueryHandler } from './posts/application/queries/get-posts.quer
 import { GetPostByIdQueryHandler } from './posts/application/queries/get-post-by-id.query-handler';
 import { GetCommentByIdQueryHandler } from './comments/application/queries/get-comment-by-id.query-handler';
 import { GetPostCommentsQueryHandler } from './comments/application/queries/get-post-comments.query-handler';
+import { QuestionsTypeOrmRepository } from './questions/infrastructure/typeorm/questions.typeorm-repository';
+import { QuestionsTypeOrmQueryRepository } from './questions/infrastructure/typeorm/query/questions.typeorm-query-repository';
 
 //command handlers (use cases) — пишущая половина CQRS
 const commandHandlers = [
@@ -75,12 +78,21 @@ const repositories = [
   CommentsTypeOrmRepository,
   CommentsTypeOrmQueryRepository,
   LikesTypeOrmRepository,
+  QuestionsTypeOrmRepository,
+  QuestionsTypeOrmQueryRepository,
 ];
 
 //CqrsModule подключён глобально в CoreModule
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Blog, Post, Comment, PostLike, CommentLike]),
+    TypeOrmModule.forFeature([
+      Blog,
+      Post,
+      Comment,
+      PostLike,
+      CommentLike,
+      Question,
+    ]),
     UserAccountsModule,
   ],
   providers: [...repositories, ...commandHandlers, ...queryHandlers],

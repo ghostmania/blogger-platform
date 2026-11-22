@@ -24,6 +24,7 @@ import { Post } from './modules/bloggers-platform/posts/domain/post.entity';
 import { Comment } from './modules/bloggers-platform/comments/domain/comment.entity';
 import { PostLike } from './modules/bloggers-platform/likes/domain/post-like.entity';
 import { CommentLike } from './modules/bloggers-platform/likes/domain/comment-like.entity';
+import { Question } from './modules/bloggers-platform/questions/domain/question.entity';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { CommentLike } from './modules/bloggers-platform/likes/domain/comment-li
           Comment,
           PostLike,
           CommentLike,
+          Question,
         ],
         synchronize: false,
         //таймауты пула — см. postgres-options.ts
